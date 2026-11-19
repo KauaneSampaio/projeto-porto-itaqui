@@ -1,0 +1,21 @@
+codigo;nome;codigo_pai;tipo;opex;ordem
+3;Receita Operacional Bruta;;GRUPO;N;10
+3.1;Tarifas portuárias;3;RECEITA_BRUTA;N;11
+3.2;Arrendamentos;3;RECEITA_BRUTA;N;12
+3.3;Outras receitas operacionais;3;RECEITA_BRUTA;N;13
+4;Deduções da Receita;;GRUPO;N;20
+4.1;PIS/COFINS;4;DEDUCAO_RECEITA;N;21
+4.2;ISS;4;DEDUCAO_RECEITA;N;22
+5;Custos dos Serviços;;GRUPO;S;30
+5.1;Pessoal operacional;5;CUSTO;S;31
+5.2;Manutenção de infraestrutura;5;CUSTO;S;32
+5.3;Energia elétrica;5;CUSTO;S;33
+6;Despesas Operacionais;;GRUPO;S;40
+6.1;Pessoal administrativo;6;DESPESA_OPERACIONAL;S;41
+6.2;Serviços de terceiros;6;GRUPO;S;42
+6.2.1;Vigilância;6.2;DESPESA_OPERACIONAL;S;43
+6.2.2;Limpeza e conservação;6.2;DESPESA_OPERACIONAL;S;44
+6.3;Seguros;6;DESPESA_OPERACIONAL;S;45
+6.4;Despesas gerais;6;DESPESA_OPERACIONAL;S;46
+7;Depreciação e Amortização;;GRUPO;N;50
+7.1;Depreciação e amortização;7;DEPRECIACAO_AMORTIZACAO;N;51
