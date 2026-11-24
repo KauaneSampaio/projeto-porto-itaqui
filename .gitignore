@@ -1,0 +1,14 @@
+# Build e dados gerados em execução
+target/
+dados-runtime/
+*.tmp
+
+# Configurações locais de editor e do Claude
+.claude/
+.idea/
+.vscode/
+*.iml
+
+# Sistema
+.DS_Store
+~$*
