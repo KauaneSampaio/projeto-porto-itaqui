@@ -107,13 +107,13 @@ class CarregadorBaseTest {
 
     @Test
     void grupoMisturandoTipos() {
-        assertErro(acrescentar("contas.csv", "5.9;Receita no grupo de custos;5;RECEITA_BRUTA;N;99"),
+        assertErro(acrescentar("contas.csv", "3.99;Receita no grupo de custos;3;RECEITA_BRUTA;N;99"),
                 "contas.csv", "mistura");
     }
 
     @Test
     void vinculoParaPremissaInexistente() {
-        assertErro(acrescentar("vinculos.csv", "6.4;SELIC;2024-01"), "vinculos.csv", "Premissa inexistente");
+        assertErro(acrescentar("vinculos.csv", "3.1;SELIC;2024-01"), "vinculos.csv", "Premissa inexistente");
     }
 
     @Test

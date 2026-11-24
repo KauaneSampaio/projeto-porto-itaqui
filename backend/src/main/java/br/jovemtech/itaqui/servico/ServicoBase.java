@@ -25,13 +25,18 @@ import br.jovemtech.itaqui.dados.CarregadorBase;
 import br.jovemtech.itaqui.dados.RelatorioImportacao;
 import br.jovemtech.itaqui.dados.RepositorioBase;
 import br.jovemtech.itaqui.dados.RepositorioCenarios;
+import br.jovemtech.itaqui.dados.RepositorioLogs;
 import br.jovemtech.itaqui.dados.ValidacaoEstrutura;
 import br.jovemtech.itaqui.dominio.Base;
 import br.jovemtech.itaqui.dominio.Conta;
 import br.jovemtech.itaqui.dominio.Periodo;
 import br.jovemtech.itaqui.dominio.Premissa;
 import br.jovemtech.itaqui.dominio.TipoConta;
+import br.jovemtech.itaqui.dominio.TipoValor;
+import br.jovemtech.itaqui.dominio.ValorLancado;
 import br.jovemtech.itaqui.dominio.Vinculo;
+import br.jovemtech.itaqui.api.dto.FechamentoMesRequest;
+import br.jovemtech.itaqui.seguranca.ContextoUsuario;
 
 /** Consultas e alterações na base (estrutura da DRE, premissas, vínculos, importação). */
 @Service
@@ -42,11 +47,13 @@ public class ServicoBase {
 
     private final RepositorioBase repositorio;
     private final RepositorioCenarios cenarios;
+    private final RepositorioLogs logs;
     private final MotorCalculo motor;
 
-    public ServicoBase(RepositorioBase repositorio, RepositorioCenarios cenarios, MotorCalculo motor) {
+    public ServicoBase(RepositorioBase repositorio, RepositorioCenarios cenarios, RepositorioLogs logs, MotorCalculo motor) {
         this.repositorio = repositorio;
         this.cenarios = cenarios;
+        this.logs = logs;
         this.motor = motor;
     }
 
@@ -250,5 +257,81 @@ public class ServicoBase {
             throw ApiException.naoEncontrado("Arquivo desconhecido: " + nome + ". Use um de " + ArquivosBase.TODOS);
         }
         return repositorio.exportar().get(nome);
+    }
+
+    /**
+     * Lançamento simples e direto de realizado para um período, avançando o corte contábil.
+     */
+    public synchronized MetaResposta registrarRealizado(FechamentoMesRequest req) {
+        Periodo periodo = Periodo.parse(req.periodo());
+        Base atual = repositorio.atual();
+        
+        List<ValorLancado> novos = new ArrayList<>();
+        for (FechamentoMesRequest.ItemLancamento item : req.lancamentos()) {
+            Conta c = atual.conta(item.codigoConta()).orElseThrow(() ->
+                    ApiException.naoEncontrado("Conta inexistente: " + item.codigoConta()));
+            if (c.tipo() == TipoConta.GRUPO) {
+                throw ApiException.regra("CONTA_GRUPO", "Não é permitido lançar valor em conta grupo: " + item.codigoConta());
+            }
+            if (item.valor().signum() < 0) {
+                throw ApiException.regra("VALOR_NEGATIVO", "Valores devem ser positivos (o sinal vem do tipo da conta)");
+            }
+            novos.add(new ValorLancado(item.codigoConta(), periodo, TipoValor.REALIZADO, item.valor()));
+        }
+
+        Base nova = atual.comFechamento(periodo, novos);
+        repositorio.substituir(nova);
+
+        String usuario = ContextoUsuario.atual();
+        logs.salvar(usuario, "FECHAMENTO_MENSAL", "BASE", periodo.toString(),
+                "Lançamento de " + novos.size() + " contas em " + periodo + ". Data de corte atualizada para " + nova.dataCorte());
+
+        return meta();
+    }
+
+    /**
+     * Atualiza percentuais de uma premissa diretamente no orçamento oficial (quando o gestor
+     * desbloqueia explicitamente a edição do oficial) e recalcula o orçado das contas vinculadas.
+     */
+    public synchronized PremissaResposta atualizarPremissaOriginal(String codigoPremissa, List<PercentualPeriodo> ajustes) {
+        Base atual = repositorio.atual();
+        if (atual.premissa(codigoPremissa).isEmpty()) {
+            throw ApiException.naoEncontrado("Premissa inexistente: " + codigoPremissa);
+        }
+        Map<Periodo, BigDecimal> novos = new TreeMap<>();
+        List<String> erros = new ArrayList<>();
+        for (PercentualPeriodo a : ajustes) {
+            Periodo p = a.periodo();
+            if (atual.fechado(p)) {
+                erros.add(p + ": mês fechado (data de corte " + atual.dataCorte() + "); o realizado não é alterado");
+                continue;
+            }
+            if (!atual.anos().contains(p.ano())) {
+                erros.add(p + ": ano sem dados na base " + atual.anos());
+                continue;
+            }
+            String problema = ValidacaoEstrutura.problemaPercentual(a.percentual());
+            if (problema != null) {
+                erros.add(p + ": " + problema);
+                continue;
+            }
+            if (novos.put(p, a.percentual()) != null) {
+                erros.add(p + ": período repetido na requisição");
+            }
+        }
+        if (!erros.isEmpty()) {
+            boolean soFechado = erros.stream().allMatch(e -> e.contains("mês fechado"));
+            throw ApiException.regra(soFechado ? "PERIODO_FECHADO" : "AJUSTE_INVALIDO",
+                    "Ajuste no orçamento oficial recusado; nada foi alterado", erros);
+        }
+        Base nova = atual.comPremissaEOrcadoAtualizados(codigoPremissa, novos);
+        repositorio.substituir(nova);
+        logs.salvar(ContextoUsuario.atual(), "EDITAR_ORCAMENTO_ORIGINAL", "BASE", codigoPremissa,
+                "Edição direta no orçamento oficial na premissa " + codigoPremissa + " (" + novos.size() + " mês(es) alterado(s))");
+        return premissa(codigoPremissa);
+    }
+
+    public List<br.jovemtech.itaqui.dominio.RegistroLog> listarLogs() {
+        return logs.listar();
     }
 }

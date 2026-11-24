@@ -36,6 +36,8 @@ import br.jovemtech.itaqui.calculo.ResultadoDre.LinhaDre;
 import br.jovemtech.itaqui.calculo.ResultadoDre.Perspectivas;
 import br.jovemtech.itaqui.calculo.ResultadoDre.ValoresMes;
 import br.jovemtech.itaqui.dados.RepositorioCenarios;
+import br.jovemtech.itaqui.dados.RepositorioLogs;
+import br.jovemtech.itaqui.seguranca.ContextoUsuario;
 import br.jovemtech.itaqui.dados.ValidacaoEstrutura;
 import br.jovemtech.itaqui.dominio.Base;
 import br.jovemtech.itaqui.dominio.Cenario;
@@ -51,11 +53,13 @@ public class ServicoCenario {
     public static final double META_MS = 3000.0;
 
     private final RepositorioCenarios repositorio;
+    private final RepositorioLogs logs;
     private final ServicoBase servicoBase;
     private final MotorCalculo motor;
 
-    public ServicoCenario(RepositorioCenarios repositorio, ServicoBase servicoBase, MotorCalculo motor) {
+    public ServicoCenario(RepositorioCenarios repositorio, RepositorioLogs logs, ServicoBase servicoBase, MotorCalculo motor) {
         this.repositorio = repositorio;
+        this.logs = logs;
         this.servicoBase = servicoBase;
         this.motor = motor;
     }
@@ -85,6 +89,7 @@ public class ServicoCenario {
         String id = "cen-" + UUID.randomUUID().toString().substring(0, 8);
         Cenario novo = new Cenario(id, nomeLimpo, false, agora, agora, ajustes);
         repositorio.salvar(novo);
+        logs.salvar(ContextoUsuario.atual(), "CRIAR_CENARIO", "CENARIO", id, "Criação do cenário '" + nomeLimpo + "'");
         return resposta(novo);
     }
 
@@ -93,12 +98,14 @@ public class ServicoCenario {
         exigirNomeLivre(nome.trim(), id);
         Cenario renomeado = c.comNome(nome.trim());
         repositorio.salvar(renomeado);
+        logs.salvar(ContextoUsuario.atual(), "RENOMEAR_CENARIO", "CENARIO", id, "Renomeado de '" + c.nome() + "' para '" + nome.trim() + "'");
         return resposta(renomeado);
     }
 
     public synchronized void remover(String id) {
-        editavel(id);
+        Cenario c = editavel(id);
         repositorio.remover(id);
+        logs.salvar(ContextoUsuario.atual(), "REMOVER_CENARIO", "CENARIO", id, "Remoção do cenário '" + c.nome() + "'");
     }
 
     private void exigirNomeLivre(String nome, String idAtual) {
@@ -114,7 +121,7 @@ public class ServicoCenario {
         Cenario c = buscar(id);
         if (c.somenteLeitura()) {
             throw ApiException.conflito("CENARIO_SOMENTE_LEITURA",
-                    "O orçamento original não pode ser alterado (RN006). Crie um cenário para simular.");
+                    "O orçamento original não pode ser alterado por aqui. Crie um cenário para simular ou libere a edição do oficial.");
         }
         return c;
     }
@@ -160,6 +167,8 @@ public class ServicoCenario {
         }
         Cenario atualizado = c.comAjustes(codigoPremissa, novos);
         repositorio.salvar(atualizado);
+        logs.salvar(ContextoUsuario.atual(), "AJUSTAR_PREMISSA", "CENARIO", id,
+                "Ajuste na premissa " + codigoPremissa + " (" + novos.size() + " meses alterados) no cenário '" + c.nome() + "'");
         return resposta(atualizado);
     }
 
@@ -167,6 +176,8 @@ public class ServicoCenario {
         Cenario c = editavel(id);
         Cenario atualizado = c.semAjustes(codigoPremissa);
         repositorio.salvar(atualizado);
+        logs.salvar(ContextoUsuario.atual(), "RESETAR_PREMISSA", "CENARIO", id,
+                "Premissa " + codigoPremissa + " restaurada ao original no cenário '" + c.nome() + "'");
         return resposta(atualizado);
     }
 

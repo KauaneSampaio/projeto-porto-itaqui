@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "app")
-public record PropriedadesApp(Dados dados, Cors cors) {
+public record PropriedadesApp(Dados dados, Cors cors, Auth auth) {
 
     public record Dados(Path diretorio) {
         public Dados {
@@ -22,12 +22,29 @@ public record PropriedadesApp(Dados dados, Cors cors) {
         }
     }
 
+    public record Auth(Boolean habilitada, String senhaAdmin, String senhaGestor) {
+        public Auth {
+            if (habilitada == null) {
+                habilitada = Boolean.TRUE;
+            }
+            if (senhaAdmin == null || senhaAdmin.isBlank()) {
+                senhaAdmin = "Itaqui@2026";
+            }
+            if (senhaGestor == null || senhaGestor.isBlank()) {
+                senhaGestor = "Gestor@2026";
+            }
+        }
+    }
+
     public PropriedadesApp {
         if (dados == null) {
             dados = new Dados(null);
         }
         if (cors == null) {
             cors = new Cors(null);
+        }
+        if (auth == null) {
+            auth = new Auth(true, null, null);
         }
     }
 }

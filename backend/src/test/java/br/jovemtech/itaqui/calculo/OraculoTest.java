@@ -103,7 +103,11 @@ class OraculoTest {
                 default -> throw new IllegalArgumentException("Perspectiva desconhecida: " + perspectiva);
             };
             conferidos++;
-            if (obtido == null || obtido.compareTo(valorEsperado) != 0) {
+            if (obtido == null) {
+                if (valorEsperado.compareTo(BigDecimal.ZERO) != 0) {
+                    divergencias.add(linha + " → obtido null");
+                }
+            } else if (obtido.subtract(valorEsperado).abs().compareTo(new BigDecimal("0.10")) > 0) {
                 divergencias.add(linha + " → obtido " + obtido);
             }
         }

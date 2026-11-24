@@ -24,7 +24,9 @@ public class ConfigWeb implements WebMvcConfigurer {
         }
         registry.addMapping("/api/**")
                 .allowedOriginPatterns(props.cors().origens().toArray(String[]::new))
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
+                .allowedHeaders("Content-Type", "X-CSRF-Token")
+                .allowCredentials(true);
     }
 
     /** O motor é Java puro; o Spring só o instancia com a regra de projeção escolhida. */

@@ -7,12 +7,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.jovemtech.itaqui.api.dto.AjustePremissaRequest;
 import br.jovemtech.itaqui.api.dto.NovaPremissaRequest;
 import br.jovemtech.itaqui.api.dto.PremissaResposta;
 import br.jovemtech.itaqui.api.dto.VinculoRequest;
@@ -45,6 +47,12 @@ public class PremissaController {
     @ResponseStatus(HttpStatus.CREATED)
     public PremissaResposta criarPremissa(@Valid @RequestBody NovaPremissaRequest req) {
         return servico.criarPremissa(req);
+    }
+
+    @PutMapping("/premissas/{codigo}")
+    public PremissaResposta atualizarPremissaOriginal(@PathVariable String codigo,
+            @Valid @RequestBody AjustePremissaRequest req) {
+        return servico.atualizarPremissaOriginal(codigo, req.ajustes());
     }
 
     @GetMapping("/vinculos")

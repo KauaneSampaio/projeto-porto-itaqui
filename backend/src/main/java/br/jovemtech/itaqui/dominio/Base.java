@@ -1,6 +1,8 @@
 package br.jovemtech.itaqui.dominio;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 
@@ -219,5 +222,66 @@ public final class Base {
         List<Vinculo> novos = new ArrayList<>(vinculos);
         novos.removeIf(filtro);
         return copia(contas(), premissas(), novos, fonte);
+    }
+
+    public Base comFechamento(Periodo novaDataCorte, List<ValorLancado> novosRealizados) {
+        List<ValorLancado> listaAtualizada = new ArrayList<>(valores);
+        // Remove eventuais realizados anteriores no mesmo período
+        for (ValorLancado vl : novosRealizados) {
+            listaAtualizada.removeIf(v -> v.codigoConta().equals(vl.codigoConta())
+                    && v.periodo().equals(vl.periodo())
+                    && v.tipo() == TipoValor.REALIZADO);
+            listaAtualizada.add(vl);
+        }
+        Periodo corte = novaDataCorte.depoisDe(this.dataCorte) ? novaDataCorte : this.dataCorte;
+        return new Base(new ArrayList<>(contas.values()), listaAtualizada, premissas(), vinculos, corte, origem, unidade, versao + 1, fonte, Instant.now());
+    }
+
+    /**
+     * Atualiza percentuais de uma premissa no orçamento oficial e recalcula os valores
+     * orçados das contas vinculadas nos meses alterados.
+     */
+    public Base comPremissaEOrcadoAtualizados(String codigoPremissa, Map<Periodo, BigDecimal> novosPercentuais) {
+        Premissa atual = premissas.get(codigoPremissa);
+        if (atual == null) {
+            throw new IllegalArgumentException("Premissa inexistente: " + codigoPremissa);
+        }
+        Map<Periodo, BigDecimal> mapaPct = new TreeMap<>(atual.percentuais());
+        List<ValorLancado> listaAtualizada = new ArrayList<>(valores);
+        MathContext mc = MathContext.DECIMAL128;
+        BigDecimal cem = BigDecimal.valueOf(100);
+
+        for (Map.Entry<Periodo, BigDecimal> entry : novosPercentuais.entrySet()) {
+            Periodo periodo = entry.getKey();
+            BigDecimal novoPct = entry.getValue();
+            BigDecimal antigoPct = atual.percentual(periodo);
+            mapaPct.put(periodo, novoPct);
+
+            if (novoPct.compareTo(antigoPct) != 0) {
+                BigDecimal fatorNovo = BigDecimal.ONE.add(novoPct.divide(cem, mc), mc);
+                BigDecimal fatorAntigo = BigDecimal.ONE.add(antigoPct.divide(cem, mc), mc);
+                for (Vinculo v : vinculos) {
+                    if (v.codigoPremissa().equals(codigoPremissa) && v.vigente(periodo)) {
+                        BigDecimal orcadoAtual = valor(v.codigoConta(), periodo, TipoValor.ORCADO);
+                        if (orcadoAtual != null) {
+                            BigDecimal novoOrcado = orcadoAtual.multiply(fatorNovo, mc)
+                                    .divide(fatorAntigo, mc)
+                                    .setScale(2, RoundingMode.HALF_UP);
+                            listaAtualizada.removeIf(vl -> vl.codigoConta().equals(v.codigoConta())
+                                    && vl.periodo().equals(periodo)
+                                    && vl.tipo() == TipoValor.ORCADO);
+                            listaAtualizada.add(new ValorLancado(v.codigoConta(), periodo, TipoValor.ORCADO, novoOrcado));
+                        }
+                    }
+                }
+            }
+        }
+
+        List<Premissa> novasPremissas = new ArrayList<>(premissas.values());
+        novasPremissas.removeIf(p -> p.codigo().equals(codigoPremissa));
+        novasPremissas.add(Premissa.de(atual.codigo(), atual.nome(), mapaPct));
+
+        return new Base(new ArrayList<>(contas.values()), listaAtualizada, novasPremissas, vinculos,
+                dataCorte, origem, unidade, versao + 1, "EDITADA", Instant.now());
     }
 }

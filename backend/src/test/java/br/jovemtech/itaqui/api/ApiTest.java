@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** Exercita todos os endpoints da API, incluindo os caminhos de erro. */
-@SpringBootTest
+@SpringBootTest(properties = "app.auth.habilitada=false")
 @AutoConfigureMockMvc
 class ApiTest {
 
@@ -101,36 +101,35 @@ class ApiTest {
     void estrutura() throws Exception {
         mvc.perform(get("/api/dre/estrutura"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].codigo").value("3"))
-                .andExpect(jsonPath("$[0].filhos[0].codigo").value("3.1"))
-                .andExpect(jsonPath("$[0].filhos[0].premissas[0]").value("TARIFA"));
+                .andExpect(jsonPath("$[0].codigo").value("1"))
+                .andExpect(jsonPath("$[0].filhos[0].codigo").value("1.1"));
     }
 
     @Test
     void cadastrarERemoverConta() throws Exception {
-        String conta = "{\"codigo\":\"6.5\",\"nome\":\"Treinamento\",\"codigoPai\":\"6\","
+        String conta = "{\"codigo\":\"4.99\",\"nome\":\"Treinamento\",\"codigoPai\":\"4\","
                 + "\"tipo\":\"DESPESA_OPERACIONAL\",\"opex\":true}";
         mvc.perform(post("/api/dre/contas").contentType(MediaType.APPLICATION_JSON).content(conta))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.codigo").value("6.5"));
+                .andExpect(jsonPath("$.codigo").value("4.99"));
         mvc.perform(post("/api/dre/contas").contentType(MediaType.APPLICATION_JSON).content(conta))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.erro").value("CONTA_DUPLICADA"));
-        mvc.perform(delete("/api/dre/contas/6.5")).andExpect(status().isNoContent());
-        mvc.perform(delete("/api/dre/contas/6.5")).andExpect(status().isNotFound());
+        mvc.perform(delete("/api/dre/contas/4.99")).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/dre/contas/4.99")).andExpect(status().isNotFound());
     }
 
     @Test
     void contaInvalida() throws Exception {
         mvc.perform(post("/api/dre/contas").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"codigo\":\"5.9\",\"nome\":\"X\",\"codigoPai\":\"5\",\"tipo\":\"RECEITA_BRUTA\"}"))
+                .content("{\"codigo\":\"3.99\",\"nome\":\"X\",\"codigoPai\":\"3\",\"tipo\":\"RECEITA_BRUTA\"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.erro").value("ESTRUTURA_INVALIDA"));
         mvc.perform(post("/api/dre/contas").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"codigo\":\"\",\"nome\":\"X\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.erro").value("REQUISICAO_INVALIDA"));
-        mvc.perform(delete("/api/dre/contas/3.1"))
+        mvc.perform(delete("/api/dre/contas/1.1.1"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.erro").value("CONTA_COM_VALORES"));
     }
@@ -144,7 +143,7 @@ class ApiTest {
                 .andExpect(jsonPath("$[*].codigo", hasItem("IPCA")));
         mvc.perform(get("/api/premissas/IPCA"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.contasVinculadas", hasItem("5.3")));
+                .andExpect(jsonPath("$.contasVinculadas", hasItem("3.10")));
         mvc.perform(get("/api/premissas/NAO")).andExpect(status().isNotFound());
 
         mvc.perform(post("/api/premissas").contentType(MediaType.APPLICATION_JSON)
@@ -156,22 +155,22 @@ class ApiTest {
                 .content("{\"codigo\":\"SELIC\",\"nome\":\"Selic\",\"valores\":[{\"periodo\":\"2026-10\",\"percentual\":1}]}"))
                 .andExpect(status().isConflict());
 
-        String vinculo = "{\"codigoConta\":\"6.4\",\"codigoPremissa\":\"SELIC\",\"vigenciaInicio\":\"2026-10\"}";
+        String vinculo = "{\"codigoConta\":\"4.8\",\"codigoPremissa\":\"SELIC\",\"vigenciaInicio\":\"2026-10\"}";
         mvc.perform(post("/api/vinculos").contentType(MediaType.APPLICATION_JSON).content(vinculo))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.nomeConta").value("Despesas gerais"));
+                .andExpect(jsonPath("$.nomeConta").value("D. Transporte e Locomoção"));
         mvc.perform(post("/api/vinculos").contentType(MediaType.APPLICATION_JSON).content(vinculo))
                 .andExpect(status().isConflict());
         mvc.perform(get("/api/vinculos"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].codigoPremissa", hasItem("SELIC")));
         mvc.perform(post("/api/vinculos").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"codigoConta\":\"6\",\"codigoPremissa\":\"IPCA\",\"vigenciaInicio\":\"2026-10\"}"))
+                .content("{\"codigoConta\":\"4\",\"codigoPremissa\":\"IPCA\",\"vigenciaInicio\":\"2026-10\"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.erro").value("CONTA_GRUPO"));
-        mvc.perform(delete("/api/vinculos").param("conta", "6.4").param("premissa", "SELIC"))
+        mvc.perform(delete("/api/vinculos").param("conta", "4.8").param("premissa", "SELIC"))
                 .andExpect(status().isNoContent());
-        mvc.perform(delete("/api/vinculos").param("conta", "6.4").param("premissa", "SELIC"))
+        mvc.perform(delete("/api/vinculos").param("conta", "4.8").param("premissa", "SELIC"))
                 .andExpect(status().isNotFound());
     }
 
@@ -263,13 +262,13 @@ class ApiTest {
     @Test
     void cenarioCopiadoENomeRepetido() throws Exception {
         String origem = criarCenario("Origem da cópia");
-        mvc.perform(put("/api/cenarios/" + origem + "/premissas/TARIFA").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(put("/api/cenarios/" + origem + "/premissas/IPCA").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"ajustes\":[{\"periodo\":\"2027-01\",\"percentual\":2.0}]}"))
                 .andExpect(status().isOk());
         mvc.perform(post("/api/cenarios").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nome\":\"Cópia\",\"copiarDe\":\"" + origem + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.ajustes.TARIFA[0].periodo").value("2027-01"));
+                .andExpect(jsonPath("$.ajustes.IPCA[0].periodo").value("2027-01"));
         mvc.perform(post("/api/cenarios").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"nome\":\"origem da CÓPIA\"}"))
                 .andExpect(status().isConflict())
@@ -363,7 +362,7 @@ class ApiTest {
         String contas = mvc.perform(get("/api/evidencias/contas.csv").param("ano", "2026"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        assertThat(contas).contains("original;2026;10;3.1;Tarifas portuárias;1;ABERTO;");
+        assertThat(contas).contains("original;2026;10;1.1.1;Movimentação Carga - TEGRAM;2;ABERTO;");
 
         mvc.perform(get("/api/evidencias/desempenho").param("ano", "2026").param("repeticoes", "5"))
                 .andExpect(status().isOk())

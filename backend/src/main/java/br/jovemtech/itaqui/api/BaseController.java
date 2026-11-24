@@ -17,9 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import br.jovemtech.itaqui.api.dto.MetaResposta;
+import br.jovemtech.itaqui.api.dto.FechamentoMesRequest;
 import br.jovemtech.itaqui.dados.ArquivosBase;
 import br.jovemtech.itaqui.dados.RelatorioImportacao;
+import br.jovemtech.itaqui.dominio.RegistroLog;
 import br.jovemtech.itaqui.servico.ServicoBase;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
 
 /** Importação (RF002, CT-07), exportação e restauração da base. */
 @RestController
@@ -69,5 +74,21 @@ public class BaseController {
     @PostMapping("/base/restaurar")
     public MetaResposta restaurar() {
         return servico.restaurar();
+    }
+
+    /**
+     * Lançamento rápido de realizado de um mês e avanço da data de corte.
+     */
+    @PostMapping("/base/fechamento")
+    public MetaResposta registrarRealizado(@Valid @RequestBody FechamentoMesRequest req) {
+        return servico.registrarRealizado(req);
+    }
+
+    /**
+     * Consulta aos logs de auditoria de cenários e lançamentos.
+     */
+    @GetMapping("/logs")
+    public List<RegistroLog> listarLogs() {
+        return servico.listarLogs();
     }
 }
