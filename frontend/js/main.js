@@ -10,6 +10,9 @@ let pronto = false;
 
 function nomeDaRota() {
     const nome = location.hash.replace("#", "");
+    if (nome === "evidencias") {
+        return "configuracoes";
+    }
     return Telas[nome] ? nome : "inicial";
 }
 
@@ -28,7 +31,7 @@ async function rotear() {
         ? '<span><i class="fa-solid fa-house"></i> Visão geral</span>'
         : '<a href="#inicial"><i class="fa-solid fa-house"></i> Visão geral</a>' +
           ' <i class="fa-solid fa-chevron-right sep"></i> <span>' + escapar(tela.titulo) + "</span>";
-    document.title = tela.titulo + " | Projeção Orçamentária e EBITDA";
+    document.title = tela.titulo + " | MeuEbitify";
 
     document.querySelectorAll("[data-route]").forEach(function (link) {
         const ativo = link.dataset.route === nome;
@@ -76,16 +79,45 @@ Estado.aoMudarContexto(function () {
 
 async function iniciar() {
     try {
+        const sessao = await Api.authMe();
+        if (!sessao || !sessao.autenticado) {
+            location.replace("login.html");
+            return;
+        }
+        definirCsrf(sessao.csrfToken);
+        Estado.sessao = sessao;
+        $("chipUsuarioTexto").textContent = sessao.nome || sessao.usuario;
+        $("chipUsuario").title = "Conectado como " + sessao.usuario + " (" + sessao.perfil + ")";
+        $("chipUsuario").hidden = false;
+        $("btnSair").hidden = false;
+        const ehAdmin = sessao.perfil === "ADMIN";
+        $("statusApi").hidden = !ehAdmin;
+        $("tabBtnEvidencias").hidden = !ehAdmin;
+        $("tabBtnUsuarios").hidden = !ehAdmin;
+
         await Estado.carregar();
         mostrarErroConexao(false);
         pronto = true;
         await renderizar(nomeDaRota());
     } catch (e) {
+        if (e.codigo === "NAO_AUTENTICADO") {
+            return;
+        }
         pronto = false;
         mostrarErroConexao(true);
         console.error(e);
     }
 }
+
+$("btnSair").addEventListener("click", async function () {
+    try {
+        await Api.authLogout();
+    } catch (e) {
+        /* mesmo se falhar, redireciona para login */
+    }
+    definirCsrf(null);
+    location.replace("login.html");
+});
 
 window.addEventListener("hashchange", rotear);
 

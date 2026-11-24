@@ -299,7 +299,7 @@ Telas.evidencias = (function () {
                 "<div><dt>Recálculo no servidor (média)</dt><dd>" + fmtNum(s.mediaMs, 2) + " ms</dd></div>" +
                 "<div><dt>Recálculo no servidor (máximo)</dt><dd>" + fmtNum(s.maximoMs, 2) + " ms</dd></div>" +
                 "<div><dt>Requisição completa no navegador</dt><dd>" + fmtNum(ida, 0) + " ms</dd></div>" +
-                '<div><dt>Meta (RNF002)</dt><dd><span class="badge ' + (s.dentroDaMeta && ida < 3000 ? "badge-ok" : "badge-falha") +
+                '<div><dt>Meta de desempenho</dt><dd><span class="badge ' + (s.dentroDaMeta && ida < 3000 ? "badge-ok" : "badge-falha") +
                 '">&lt; 3.000 ms</span></dd></div>';
         } catch (e) {
             mostrarAviso(mensagemErro(e), "erro");
