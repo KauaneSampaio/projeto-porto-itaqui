@@ -80,14 +80,19 @@ const Estado = {
         $("ctxAno").innerHTML = this.meta.anos.map(function (a) {
             return '<option value="' + a + '"' + (a === Estado.ano ? " selected" : "") + ">" + a + "</option>";
         }).join("");
+        const anoCorte = Number(String(this.meta.dataCorte).slice(0, 4));
+        $("ctxCorteChip").hidden = this.ano > anoCorte;
         $("ctxCorte").textContent = rotuloPeriodo(this.meta.dataCorte);
     },
 
     mostrarSelo: function () {
+        const el = $("seloFicticio");
+        if (!el) {
+            return;
+        }
         const ficticio = this.meta.dadosFicticios;
-        $("seloFicticio").hidden = !ficticio;
-        $("seloFicticio").title = this.meta.aviso || "";
-        $("seloTexto").textContent = ficticio ? "DADOS FICTÍCIOS" : "";
+        el.hidden = !ficticio;
+        el.title = this.meta.aviso || "Dados fictícios para demonstração";
     },
 
     mudarContexto: function (cenarioId, ano) {

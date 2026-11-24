@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: meuebitify
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /login.html
+    envVars:
+      - key: APP_COOKIE_SECURE
+        value: "true"
+      - key: APP_FORWARD_HEADERS
+        value: framework
+      - key: APP_CORS_ORIGENS
+        value: ""
+      - key: APP_AUTH_SENHA_ADMIN
+        sync: false
+      - key: APP_AUTH_SENHA_GESTOR
+        sync: false

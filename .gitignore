@@ -9,6 +9,8 @@ dados-runtime/
 .vscode/
 *.iml
 
-# Sistema
+# Sistema e Python
 .DS_Store
 ~$*
+__pycache__/
+*.pyc

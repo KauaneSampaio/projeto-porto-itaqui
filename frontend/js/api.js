@@ -16,7 +16,7 @@ const API_BASE = (function () {
     if (param) {
         return param.replace(/\/$/, "");
     }
-    if (location.protocol.indexOf("http") === 0 && location.port === "8080") {
+    if (location.protocol.indexOf("http") === 0 && location.port !== "5500" && location.port !== "5501") {
         return location.origin + "/api";
     }
     return "http://localhost:8080/api";
@@ -30,6 +30,12 @@ class ErroApi extends Error {
         this.detalhes = detalhes || [];
         this.corpo = corpo;
     }
+}
+
+let CSRF_TOKEN = null;
+
+function definirCsrf(token) {
+    CSRF_TOKEN = token || null;
 }
 
 function marcarConexao(ok) {
@@ -46,7 +52,10 @@ function marcarConexao(ok) {
  */
 async function chamarApi(metodo, caminho, corpo, opcoes) {
     const op = opcoes || {};
-    const init = { method: metodo, headers: {} };
+    const init = { method: metodo, headers: {}, credentials: "include" };
+    if (CSRF_TOKEN && ["POST", "PUT", "PATCH", "DELETE"].indexOf(metodo.toUpperCase()) !== -1) {
+        init.headers["X-CSRF-Token"] = CSRF_TOKEN;
+    }
     if (corpo instanceof FormData) {
         init.body = corpo;
     } else if (corpo !== undefined && corpo !== null) {
@@ -69,6 +78,11 @@ async function chamarApi(metodo, caminho, corpo, opcoes) {
         }
     }
     marcarConexao(true);
+
+    if (resposta.status === 401 && caminho.indexOf("/auth/") !== 0) {
+        location.replace("login.html");
+        throw new ErroApi(401, "NAO_AUTENTICADO", "Sessão expirada. Faça login novamente.");
+    }
 
     if (resposta.status === 204) {
         return null;
@@ -102,6 +116,19 @@ function q(params) {
 const enc = encodeURIComponent;
 
 const Api = {
+    /* Autenticação */
+    authMe: function () { return chamarApi("GET", "/auth/me", null, { silencioso: true }); },
+    authLogout: function () { return chamarApi("POST", "/auth/logout", null, { silencioso: true }); },
+    alterarSenha: function (senhaAtual, novaSenha) {
+        return chamarApi("POST", "/auth/alterar-senha", { senhaAtual: senhaAtual, novaSenha: novaSenha });
+    },
+    listarUsuarios: function () { return chamarApi("GET", "/auth/usuarios"); },
+    criarUsuario: function (dados) { return chamarApi("POST", "/auth/usuarios", dados); },
+    alterarStatusUsuario: function (login, ativo) {
+        return chamarApi("PATCH", "/auth/usuarios/" + enc(login) + "/status", { ativo: !!ativo });
+    },
+    removerUsuario: function (login) { return chamarApi("DELETE", "/auth/usuarios/" + enc(login)); },
+
     meta: function () { return chamarApi("GET", "/meta", null, { silencioso: true }); },
 
     /* Estrutura da DRE (RF001) */
@@ -111,6 +138,9 @@ const Api = {
 
     /* Premissas e vínculos (RF003, RF004) */
     premissas: function () { return chamarApi("GET", "/premissas"); },
+    atualizarPremissaOriginal: function (codigo, ajustes) {
+        return chamarApi("PUT", "/premissas/" + enc(codigo), { ajustes: ajustes });
+    },
     vinculos: function () { return chamarApi("GET", "/vinculos"); },
     criarVinculo: function (dados) { return chamarApi("POST", "/vinculos", dados); },
     removerVinculo: function (conta, premissa) {
@@ -141,6 +171,12 @@ const Api = {
     /* Base e importação (RF002, CT-07) */
     importar: function (formData, simular) {
         return chamarApi("POST", "/importacao" + q({ simular: !!simular }), formData, { aceitar: [422] });
+    },
+    fechamento: function (dados) {
+        return chamarApi("POST", "/base/fechamento", dados);
+    },
+    logs: function () {
+        return chamarApi("GET", "/logs");
     },
     arquivoBase: function (nome) { return chamarApi("GET", "/base/arquivos/" + enc(nome), null, { formato: "texto" }); },
     restaurar: function () { return chamarApi("POST", "/base/restaurar"); },

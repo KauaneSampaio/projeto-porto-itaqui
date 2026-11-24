@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projeção Orçamentária e EBITDA</title>
+    <title>MeuEbitify — Projeção Orçamentária e EBITDA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,8 +11,8 @@
         integrity="sha384-PPIZEGYM1v8zp5Py7UjFb79S58UeqCL9pYVnVPURKEqvioPROaVAJKKLzvH2rDnI" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
         integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/style.css?v=9">
+    <link rel="stylesheet" href="css/app.css?v=9">
 </head>
 <body>
     <!-- =============== BARRA SUPERIOR =============== -->
@@ -25,19 +25,21 @@
             <a href="#inicial" class="brand">
                 <span class="icon-empap"><img src="img/IconEmap.png" alt="Logo EMAP"></span>
                 <span class="brand-text">
-                    <strong>Projeção Orçamentária</strong>
-                    <small>EBITDA · Orçado × Realizado × Forecast</small>
+                    <strong>MeuEbitify</strong>
+                    <small>Projeção Orçamentária · EBITDA</small>
                 </span>
             </a>
         </div>
         <div class="topbar-right">
-            <!-- RF012: selo persistente de dados fictícios -->
-            <span class="selo-ficticio" id="seloFicticio" title="Dados fictícios para demonstração">
-                <i class="fa-solid fa-flask"></i> <span id="seloTexto">DADOS FICTÍCIOS</span>
-            </span>
-            <span class="chip status-api" id="statusApi" title="Conexão com o servidor">
+            <span class="chip status-api" id="statusApi" hidden title="Conexão com o servidor">
                 <i class="fa-solid fa-circle"></i> <span id="statusApiTexto">Conectando…</span>
             </span>
+            <span class="chip chip-usuario" id="chipUsuario" hidden title="Usuário autenticado">
+                <i class="fa-solid fa-user-shield"></i> <span id="chipUsuarioTexto"></span>
+            </span>
+            <button type="button" class="btn-sair" id="btnSair" hidden title="Encerrar sessão">
+                <i class="fa-solid fa-right-from-bracket"></i> <span>Sair</span>
+            </button>
         </div>
     </header>
 
@@ -57,16 +59,14 @@
                 <a href="#cenarios" class="menu-item" data-route="cenarios">
                     <i class="fa-solid fa-sliders"></i><span>Premissas e cenários</span>
                 </a>
-                <a href="#evidencias" class="menu-item" data-route="evidencias">
-                    <i class="fa-solid fa-clipboard-check"></i><span>Evidências</span>
-                </a>
                 <a href="#configuracoes" class="menu-item" data-route="configuracoes">
                     <i class="fa-solid fa-gear"></i><span>Configurações</span>
                 </a>
             </nav>
             <div class="sidebar-footer">
-                <strong>Jovem Tech 2026</strong>
+                <strong>MeuEbitify</strong>
                 Porto do Itaqui / EMAP
+                <small class="aviso-base" id="seloFicticio" hidden>Base demonstrativa · dados fictícios</small>
             </div>
         </aside>
         <div class="overlay" id="overlay"></div>
@@ -91,7 +91,7 @@
                         <span>Exercício</span>
                         <select id="ctxAno" class="select" aria-label="Exercício"></select>
                     </label>
-                    <span class="date-chip" title="Último mês fechado (realizado)">
+                    <span class="date-chip" id="ctxCorteChip" title="Último mês fechado (realizado)">
                         <i class="fa-solid fa-lock"></i> Fechado até <strong id="ctxCorte">—</strong>
                     </span>
                 </div>
@@ -274,27 +274,52 @@
 
             <!-- ============ PREMISSAS E CENÁRIOS ============ -->
             <section class="view" id="view-cenarios" hidden>
+                <!-- Passo a passo: mostra em que etapa o usuário está -->
+                <ol class="passos-cenario" id="cenPassos" aria-label="Como simular">
+                    <li data-passo="1">
+                        <span class="passo-num">1</span>
+                        <span><strong>Escolha ou crie uma simulação</strong><small>O orçamento oficial nunca é alterado</small></span>
+                    </li>
+                    <li data-passo="2">
+                        <span class="passo-num">2</span>
+                        <span><strong>Ajuste os índices</strong><small>Só os meses ainda não fechados</small></span>
+                    </li>
+                    <li data-passo="3">
+                        <span class="passo-num">3</span>
+                        <span><strong>Veja o impacto no EBITDA</strong><small>Recalculado na hora</small></span>
+                    </li>
+                </ol>
+
                 <div class="cenarios-grid">
                     <aside class="card cenarios-lista">
                         <div class="card-header">
                             <div>
-                                <h2>Cenários</h2>
-                                <p>O original não pode ser alterado</p>
+                                <h2>Simulações</h2>
+                                <p>Clique para abrir</p>
                             </div>
-                            <button type="button" class="btn btn-primary btn-sm" id="cenNovo">
-                                <i class="fa-solid fa-plus"></i> Novo
-                            </button>
                         </div>
+                        <button type="button" class="btn btn-primary btn-bloco" id="cenNovo">
+                            <i class="fa-solid fa-plus"></i> Nova simulação
+                        </button>
                         <ul class="lista-cenarios" id="cenLista"></ul>
+                        <p class="hint cen-dica">
+                            <i class="fa-regular fa-lightbulb"></i>
+                            <span>Uma <strong>simulação</strong> é uma cópia do orçamento em que você troca os índices
+                            (IPCA, INPC, IGP-M) para responder perguntas como “e se a inflação subir?”.</span>
+                        </p>
                     </aside>
+
                     <div class="cenarios-main">
                         <section class="card">
                             <div class="card-header">
                                 <div>
-                                    <h2 id="cenTitulo">Premissas</h2>
+                                    <h2><span id="cenTitulo">Premissas</span> <span class="badge" id="cenTipo"></span></h2>
                                     <p id="cenSubtitulo"></p>
                                 </div>
                                 <div class="header-tools">
+                                    <button type="button" class="btn btn-light btn-sm" id="cenBloquearOficial" hidden>
+                                        <i class="fa-solid fa-lock"></i> Bloquear oficial
+                                    </button>
                                     <button type="button" class="btn btn-light btn-sm" id="cenRenomear">
                                         <i class="fa-solid fa-pen"></i> Renomear
                                     </button>
@@ -303,28 +328,74 @@
                                     </button>
                                 </div>
                             </div>
-                            <p class="notice" id="cenAvisoOriginal" hidden>
-                                <i class="fa-solid fa-lock"></i>
-                                <span>Você está vendo o <strong>orçamento original</strong>, que é somente leitura.
-                                    Para simular, crie um cenário ou selecione um existente.</span>
-                            </p>
-                            <div class="impacto" id="cenImpacto" hidden></div>
-                            <div id="cenPremissas" class="premissas-lista"></div>
-                        </section>
-                        <section class="card">
-                            <div class="card-header">
+
+                            <!-- Orçamento oficial: convite para criar uma simulação ou liberar edição -->
+                            <div class="cen-oficial" id="cenAvisoOriginal" hidden>
+                                <span class="cen-oficial-icone"><i class="fa-solid fa-lock"></i></span>
                                 <div>
-                                    <h2>Vínculos conta → premissa</h2>
-                                    <p>Valem para todos os cenários. Conta sem vínculo: projeção = orçado.</p>
+                                    <strong>Este é o orçamento oficial (protegido por padrão).</strong>
+                                    <p>Para testar hipóteses sem mudar o oficial, crie uma simulação. Se você realmente
+                                        precisa ajustar o orçamento oficial, clique em <strong>Liberar edição do oficial</strong>.</p>
+                                    <div class="cen-oficial-acoes">
+                                        <button type="button" class="btn btn-primary" id="cenNovoDoOficial">
+                                            <i class="fa-solid fa-flask"></i> Criar simulação a partir do oficial
+                                        </button>
+                                        <button type="button" class="btn btn-light" id="cenDesbloquearOficial">
+                                            <i class="fa-solid fa-unlock"></i> Liberar edição do oficial
+                                        </button>
+                                        <span id="cenAbrirExistente"></span>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Aviso quando a edição do orçamento oficial está liberada -->
+                            <div class="notice" id="cenAvisoEdicaoOficial" hidden>
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span><strong>Edição do orçamento oficial liberada:</strong> ao salvar, os índices e valores
+                                    orçados dos meses abertos serão atualizados na base oficial e registrados nos logs de auditoria.</span>
+                            </div>
+
+                            <!-- Ano sem meses abertos -->
+                            <div class="notice" id="cenAnoFechado" hidden></div>
+
+                            <!-- Impacto da simulação -->
+                            <div class="impacto-cards" id="cenImpacto" hidden></div>
+
+                            <div class="premissas-cabecalho" id="cenPremissasCab">
+                                <h3>Índices econômicos (% ao mês)</h3>
+                                <p class="hint" id="cenPremissasHint"></p>
+                            </div>
+                            <div id="cenPremissas" class="premissas-lista"></div>
+
+                            <!-- Barra de alterações pendentes -->
+                            <div class="barra-pendentes" id="cenPendentes" hidden>
+                                <span><i class="fa-solid fa-circle-exclamation"></i> <strong id="cenPendentesTexto"></strong></span>
+                                <span class="grow"></span>
+                                <button type="button" class="btn btn-light btn-sm" id="cenDescartar">
+                                    <i class="fa-solid fa-xmark"></i> Descartar
+                                </button>
+                                <button type="button" class="btn btn-primary" id="cenSalvar">
+                                    <i class="fa-solid fa-calculator"></i> Salvar e recalcular
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- Vínculos: configuração avançada, recolhida por padrão -->
+                        <details class="card vinculos-avancado">
+                            <summary>
+                                <i class="fa-solid fa-chevron-right chev"></i>
+                                <span>
+                                    <strong>Avançado: quais contas seguem cada índice</strong>
+                                    <small>Vale para todas as simulações. Conta sem índice: projeção = orçado.</small>
+                                </span>
+                            </summary>
                             <form id="vinForm" class="vin-form" autocomplete="off">
                                 <label class="field">
                                     <span>Conta</span>
                                     <select id="vinConta" required></select>
                                 </label>
                                 <label class="field">
-                                    <span>Premissa</span>
+                                    <span>Segue o índice</span>
                                     <select id="vinPremissa" required></select>
                                 </label>
                                 <label class="field">
@@ -337,95 +408,94 @@
                             </form>
                             <div class="table-wrap">
                                 <table class="tabela-compacta">
-                                    <thead><tr><th>Conta</th><th>Premissa</th><th>Vigência</th><th class="center">Ações</th></tr></thead>
+                                    <thead><tr><th>Conta</th><th>Índice</th><th>Desde</th><th class="center">Ações</th></tr></thead>
                                     <tbody id="vinCorpo"></tbody>
                                 </table>
                             </div>
-                        </section>
+                        </details>
                     </div>
                 </div>
             </section>
 
-            <!-- ============ EVIDÊNCIAS ============ -->
-            <section class="view" id="view-evidencias" hidden>
-                <section class="card">
-                    <div class="card-header no-print">
-                        <div>
-                            <h2>Verificação automática (CT-01 a CT-07)</h2>
-                            <p>Executa as checagens contra o servidor e registra o resultado</p>
-                        </div>
-                        <div class="header-tools">
-                            <button type="button" class="btn btn-primary" id="evRodar">
-                                <i class="fa-solid fa-play"></i> Executar verificação
-                            </button>
-                            <button type="button" class="btn btn-light" id="evImprimir">
-                                <i class="fa-solid fa-print"></i> Imprimir
-                            </button>
-                        </div>
-                    </div>
-                    <div class="print-only print-head">
-                        <h2>Matriz de evidências — PoC Projeção Orçamentária e EBITDA</h2>
-                        <p id="evPrintInfo"></p>
-                    </div>
-                    <div class="table-wrap">
-                        <table>
-                            <thead><tr><th>Caso</th><th>O que verifica</th><th>Resultado</th><th>Evidência</th></tr></thead>
-                            <tbody id="evCorpo"></tbody>
-                        </table>
-                    </div>
-                    <p class="hint" id="evRodape">Ainda não executado.</p>
-                </section>
-                <section class="two-cols no-print">
-                    <article class="card">
-                        <div class="card-header">
-                            <div>
-                                <h2>Exportar para conferência</h2>
-                                <p>CSV no layout da Planilha Oráculo (decimal com vírgula)</p>
-                            </div>
-                        </div>
-                        <div class="lista-downloads">
-                            <button type="button" class="btn btn-light" id="evBaixarInd">
-                                <i class="fa-solid fa-file-csv"></i> Indicadores do cenário/exercício
-                            </button>
-                            <button type="button" class="btn btn-light" id="evBaixarContas">
-                                <i class="fa-solid fa-file-csv"></i> DRE conta × mês
-                            </button>
-                        </div>
-                    </article>
-                    <article class="card">
-                        <div class="card-header">
-                            <div>
-                                <h2>Desempenho (RNF002)</h2>
-                                <p>Meta: recálculo em menos de 3 segundos</p>
-                            </div>
-                            <button type="button" class="btn btn-light btn-sm" id="evMedir">
-                                <i class="fa-solid fa-stopwatch"></i> Medir
-                            </button>
-                        </div>
-                        <dl class="info-list" id="evDesempenho">
-                            <div><dt>Ainda não medido</dt><dd>—</dd></div>
-                        </dl>
-                    </article>
-                </section>
-            </section>
 
             <!-- ============ CONFIGURAÇÕES ============ -->
             <section class="view" id="view-configuracoes" hidden>
                 <div class="settings-grid">
                     <nav class="card settings-tabs" aria-label="Seções das configurações">
-                        <button type="button" class="stab" data-tab="importar" aria-selected="true">
-                            <i class="fa-solid fa-file-import"></i> Importar base
+                        <button type="button" class="stab" data-tab="fechamento" aria-selected="true">
+                            <i class="fa-solid fa-calendar-check"></i> Fechamento mensal
+                        </button>
+                        <button type="button" class="stab" data-tab="importar" aria-selected="false">
+                            <i class="fa-solid fa-file-import"></i> Importar base (CSV)
                         </button>
                         <button type="button" class="stab" data-tab="estrutura" aria-selected="false">
                             <i class="fa-solid fa-sitemap"></i> Estrutura da DRE
                         </button>
+                        <button type="button" class="stab" data-tab="evidencias" id="tabBtnEvidencias" aria-selected="false" hidden>
+                            <i class="fa-solid fa-clipboard-check"></i> Evidências (Admin)
+                        </button>
+                        <button type="button" class="stab" data-tab="logs" aria-selected="false">
+                            <i class="fa-solid fa-clock-rotate-left"></i> Logs de auditoria
+                        </button>
                         <button type="button" class="stab" data-tab="aparencia" aria-selected="false">
                             <i class="fa-solid fa-palette"></i> Aparência
                         </button>
+                        <button type="button" class="stab" data-tab="seguranca" aria-selected="false">
+                            <i class="fa-solid fa-shield-halved"></i> Minha conta
+                        </button>
+                        <button type="button" class="stab" data-tab="usuarios" id="tabBtnUsuarios" aria-selected="false" hidden>
+                            <i class="fa-solid fa-users-gear"></i> Usuários (Admin)
+                        </button>
                     </nav>
                     <div class="settings-main">
+                        <!-- FECHAMENTO MENSAL (Lançamento Simplificado) -->
+                        <section class="card tab-panel" id="tab-fechamento">
+                            <div class="card-header">
+                                <div>
+                                    <h2>Lançamento de Realizado & Fechamento de Mês</h2>
+                                    <p>Informe o período de corte e digite o valor realizado das contas analíticas. O sistema atualiza o corte e calcula o novo forecast automaticamente.</p>
+                                </div>
+                            </div>
+                            <form id="fechamentoForm" autocomplete="off">
+                                <div class="form-grid two">
+                                    <label class="field">
+                                        <span>Mês a fechar (Período) *</span>
+                                        <input type="month" id="fechamentoPeriodo" required>
+                                    </label>
+                                    <label class="field">
+                                        <span>Filtro de busca nas contas</span>
+                                        <input type="text" id="fechamentoFiltro" placeholder="Digite código ou nome para filtrar...">
+                                    </label>
+                                </div>
+                                <p class="hint">Preencha o realizado de cada conta analítica para o mês selecionado. (Contas em branco manterão o valor orçado correspondente).</p>
+                                
+                                <div class="table-wrap" style="max-height: 480px; overflow-y: auto;">
+                                    <table class="tabela-compacta">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 140px;">Código</th>
+                                                <th>Conta Analítica</th>
+                                                <th style="width: 140px;">Tipo</th>
+                                                <th style="width: 220px;" class="right">Valor Realizado (R$)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fechamentoCorpo"></tbody>
+                                    </table>
+                                </div>
+
+                                <div class="form-actions" style="margin-top: 1rem;">
+                                    <button type="button" class="btn btn-light" id="fechamentoSugerirOrcado">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Preencher com Orçado
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="fechamentoSalvar">
+                                        <i class="fa-solid fa-lock"></i> Confirmar Fechamento do Mês
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+
                         <!-- IMPORTAR -->
-                        <section class="card tab-panel" id="tab-importar">
+                        <section class="card tab-panel" id="tab-importar" hidden>
                             <div class="card-header">
                                 <div>
                                     <h2>Importar base (CSV)</h2>
@@ -549,6 +619,169 @@
                                 </span>
                             </label>
                         </section>
+
+                        <!-- EVIDÊNCIAS (CT-01 a CT-07) -->
+                        <section class="card tab-panel" id="tab-evidencias" hidden>
+                            <div class="card-header no-print">
+                                <div>
+                                    <h2>Verificação automática (CT-01 a CT-07)</h2>
+                                    <p>Executa as checagens contra o servidor e registra o resultado</p>
+                                </div>
+                                <div class="header-tools">
+                                    <button type="button" class="btn btn-primary" id="evRodar">
+                                        <i class="fa-solid fa-play"></i> Executar verificação
+                                    </button>
+                                    <button type="button" class="btn btn-light" id="evImprimir">
+                                        <i class="fa-solid fa-print"></i> Imprimir
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="print-only print-head">
+                                <h2>Matriz de evidências — MeuEbitify</h2>
+                                <p id="evPrintInfo"></p>
+                            </div>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead><tr><th>Caso</th><th>O que verifica</th><th>Resultado</th><th>Evidência</th></tr></thead>
+                                    <tbody id="evCorpo"></tbody>
+                                </table>
+                            </div>
+                            <p class="hint" id="evRodape">Ainda não executado.</p>
+
+                            <div style="margin-top: 1.5rem;" class="no-print">
+                                <h3>Exportação & Desempenho</h3>
+                                <div class="form-actions" style="margin-bottom: 1rem;">
+                                    <button type="button" class="btn btn-light" id="evBaixarInd">
+                                        <i class="fa-solid fa-file-csv"></i> Exportar Indicadores (CSV)
+                                    </button>
+                                    <button type="button" class="btn btn-light" id="evBaixarContas">
+                                        <i class="fa-solid fa-file-csv"></i> Exportar DRE conta × mês (CSV)
+                                    </button>
+                                    <button type="button" class="btn btn-light" id="evMedir">
+                                        <i class="fa-solid fa-stopwatch"></i> Medir Desempenho
+                                    </button>
+                                </div>
+                                <dl class="info-list" id="evDesempenho">
+                                    <div><dt>Desempenho</dt><dd>Ainda não medido</dd></div>
+                                </dl>
+                            </div>
+                        </section>
+
+                        <!-- SEGURANÇA / MINHA CONTA -->
+                        <section class="card tab-panel" id="tab-seguranca" hidden>
+                            <div class="card-header">
+                                <div>
+                                    <h2>Segurança da Conta</h2>
+                                    <p>Altere sua senha de acesso. Use no mínimo 8 caracteres com letras e números.</p>
+                                </div>
+                            </div>
+                            <form id="senhaForm" autocomplete="off">
+                                <div class="form-grid two">
+                                    <label class="field span-2">
+                                        <span>Senha atual *</span>
+                                        <input type="password" id="senhaAtual" required autocomplete="current-password">
+                                    </label>
+                                    <label class="field">
+                                        <span>Nova senha *</span>
+                                        <input type="password" id="senhaNova" required minlength="8" maxlength="128" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
+                                    </label>
+                                    <label class="field">
+                                        <span>Confirmar nova senha *</span>
+                                        <input type="password" id="senhaConfirmar" required minlength="8" maxlength="128" autocomplete="new-password" placeholder="Repita a nova senha">
+                                    </label>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa-solid fa-key"></i> Atualizar senha
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+
+                        <!-- USUÁRIOS (SOMENTE ADMIN) -->
+                        <section class="card tab-panel" id="tab-usuarios" hidden>
+                            <div class="card-header">
+                                <div>
+                                    <h2>Gestão de Usuários</h2>
+                                    <p>Crie novas contas de acesso e gerencie permissões (exclusivo para administradores).</p>
+                                </div>
+                            </div>
+                            <form id="usuarioForm" autocomplete="off">
+                                <div class="form-grid two">
+                                    <label class="field">
+                                        <span>Login *</span>
+                                        <input type="text" id="usrLogin" required minlength="3" maxlength="40" pattern="[A-Za-z0-9._\-]+" placeholder="Ex.: analista.gfin">
+                                    </label>
+                                    <label class="field">
+                                        <span>Nome completo *</span>
+                                        <input type="text" id="usrNome" required minlength="2" maxlength="80" placeholder="Ex.: Maria Silva">
+                                    </label>
+                                    <label class="field">
+                                        <span>Perfil *</span>
+                                        <select id="usrPerfil" required>
+                                            <option value="GESTOR">Gestor (acesso operacional)</option>
+                                            <option value="ADMIN">Administrador (gerencia contas)</option>
+                                        </select>
+                                    </label>
+                                    <label class="field">
+                                        <span>Senha inicial *</span>
+                                        <input type="password" id="usrSenha" required minlength="8" maxlength="128" placeholder="Mín. 8 caracteres (letras e números)">
+                                    </label>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa-solid fa-user-plus"></i> Criar conta
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="table-wrap" style="margin-top: 1.25rem;">
+                                <table class="tabela-compacta">
+                                    <thead>
+                                        <tr>
+                                            <th>Login</th>
+                                            <th>Nome</th>
+                                            <th>Perfil</th>
+                                            <th>Status</th>
+                                            <th class="center">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usrCorpo">
+                                        <tr><td colspan="5" class="center">Carregando usuários…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        <!-- LOGS DE AUDITORIA -->
+                        <section class="card tab-panel" id="tab-logs" hidden>
+                            <div class="card-header">
+                                <div>
+                                    <h2>Logs de Auditoria</h2>
+                                    <p>Histórico rastreável de cenários, premissas e lançamentos efetuados no sistema.</p>
+                                </div>
+                                <div class="header-tools">
+                                    <button type="button" class="btn btn-light" id="logRecarregar">
+                                        <i class="fa-solid fa-rotate"></i> Atualizar logs
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-wrap" style="max-height: 500px; overflow-y: auto;">
+                                <table class="tabela-compacta">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 170px;">Data / Hora</th>
+                                            <th style="width: 140px;">Usuário</th>
+                                            <th style="width: 130px;">Operação</th>
+                                            <th style="width: 120px;">Entidade</th>
+                                            <th>Detalhes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="logCorpo">
+                                        <tr><td colspan="5" class="center">Carregando logs...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
                     </div>
                     <aside class="settings-side">
                         <section class="card">
@@ -564,7 +797,7 @@
                             <div class="card-header">
                                 <div>
                                     <h2>Regras de cálculo</h2>
-                                    <p>Validadas com a GFin (RN001–RN005)</p>
+                                    <p>Critérios de cálculo adotados no sistema</p>
                                 </div>
                             </div>
                             <dl class="info-list regras" id="sobreRegras"></dl>
@@ -616,16 +849,16 @@
     <div class="carregando" id="carregando" hidden><span class="spinner"></span> Calculando…</div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="js/base.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/estado.js"></script>
-    <script src="js/graficos.js"></script>
-    <script src="js/telas/inicial.js"></script>
-    <script src="js/telas/dre.js"></script>
-    <script src="js/telas/comparativo.js"></script>
-    <script src="js/telas/cenarios.js"></script>
-    <script src="js/telas/evidencias.js"></script>
-    <script src="js/telas/configuracoes.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/base.js?v=9"></script>
+    <script src="js/api.js?v=10"></script>
+    <script src="js/estado.js?v=9"></script>
+    <script src="js/graficos.js?v=9"></script>
+    <script src="js/telas/inicial.js?v=9"></script>
+    <script src="js/telas/dre.js?v=9"></script>
+    <script src="js/telas/comparativo.js?v=9"></script>
+    <script src="js/telas/cenarios.js?v=9"></script>
+    <script src="js/telas/evidencias.js?v=9"></script>
+    <script src="js/telas/configuracoes.js?v=9"></script>
+    <script src="js/main.js?v=9"></script>
 </body>
 </html>
