@@ -1,10 +1,6 @@
 package br.jovemtech.itaqui.seguranca;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,43 +16,46 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.jovemtech.itaqui.config.PropriedadesApp;
+import br.jovemtech.itaqui.dados.ArmazenamentoEstado;
 import jakarta.annotation.PostConstruct;
 
 /**
- * Repositório de usuários em JSON com senhas armazenadas exclusivamente em hash PBKDF2,
- * gravação atômica e permissão restrita (0600) em sistemas POSIX.
+ * Repositório de usuários em JSON (disco local ou PostgreSQL via {@link ArmazenamentoEstado}),
+ * com senhas armazenadas exclusivamente em hash PBKDF2.
  */
 @Repository
 public class RepositorioUsuarios {
 
+    private static final String CHAVE = "usuarios.json";
     private static final Logger log = LoggerFactory.getLogger(RepositorioUsuarios.class);
     private static final TypeReference<List<Usuario>> TIPO_LISTA = new TypeReference<>() {
     };
 
-    private final Path arquivo;
+    private final ArmazenamentoEstado armazenamento;
     private final ObjectMapper json;
     private final PropriedadesApp props;
     private final Map<String, Usuario> usuarios = new LinkedHashMap<>();
 
-    public RepositorioUsuarios(PropriedadesApp props, ObjectMapper json) {
-        this.arquivo = props.dados().diretorio().resolve("usuarios.json");
-        this.json = json;
+    public RepositorioUsuarios(ArmazenamentoEstado armazenamento, PropriedadesApp props, ObjectMapper json) {
+        this.armazenamento = armazenamento;
         this.props = props;
+        this.json = json;
     }
 
     @PostConstruct
     public synchronized void carregar() {
         usuarios.clear();
-        if (Files.isRegularFile(arquivo)) {
+        Optional<String> salvo = armazenamento.ler(CHAVE);
+        if (salvo.isPresent() && !salvo.get().isBlank()) {
             try {
-                List<Usuario> lista = json.readValue(arquivo.toFile(), TIPO_LISTA);
+                List<Usuario> lista = json.readValue(salvo.get(), TIPO_LISTA);
                 for (Usuario u : lista) {
                     usuarios.put(normalizar(u.login()), u);
                 }
-                log.info("{} usuário(s) carregado(s) de {}", usuarios.size(), arquivo.toAbsolutePath());
+                log.info("{} usuário(s) carregado(s) de {}", usuarios.size(), armazenamento.descricaoDestino(CHAVE));
                 return;
             } catch (IOException e) {
-                log.error("Falha ao ler {}; recriando usuários padrão", arquivo, e);
+                log.error("Falha ao ler {}; recriando usuários padrão", armazenamento.descricaoDestino(CHAVE), e);
             }
         }
         inicializarPadrao();
@@ -68,7 +67,7 @@ public class RepositorioUsuarios {
         salvarInterno(new Usuario("admin", "Administrador GFin", "ADMIN", HashSenha.gerar(senhaAdmin), true));
         salvarInterno(new Usuario("gestor.emap", "Gestor Financeiro EMAP", "GESTOR", HashSenha.gerar(senhaGestor), true));
         gravar();
-        log.info("Arquivo de usuários criado em {} com contas iniciais (admin, gestor.emap)", arquivo.toAbsolutePath());
+        log.info("Contas iniciais (admin, gestor.emap) gravadas em {}", armazenamento.descricaoDestino(CHAVE));
     }
 
     private void salvarInterno(Usuario u) {
@@ -82,7 +81,6 @@ public class RepositorioUsuarios {
         return Optional.ofNullable(usuarios.get(normalizar(login)));
     }
 
-    /** Verifica rapidamente em memória se a conta ainda existe e permanece ativa. */
     public synchronized boolean estaAtivo(String login) {
         if (login == null || login.isBlank()) {
             return false;
@@ -140,21 +138,10 @@ public class RepositorioUsuarios {
 
     private void gravar() {
         try {
-            Files.createDirectories(arquivo.getParent());
-            Path tmp = arquivo.resolveSibling(arquivo.getFileName() + ".tmp");
-            json.writerWithDefaultPrettyPrinter().writeValue(tmp.toFile(), new ArrayList<>(usuarios.values()));
-            Files.move(tmp, arquivo, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            restringirPermissao(arquivo);
+            String conteudo = json.writerWithDefaultPrettyPrinter().writeValueAsString(new ArrayList<>(usuarios.values()));
+            armazenamento.gravar(CHAVE, conteudo, true);
         } catch (IOException e) {
-            throw new IllegalStateException("Não foi possível gravar " + arquivo, e);
-        }
-    }
-
-    private static void restringirPermissao(Path path) {
-        try {
-            Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------"));
-        } catch (UnsupportedOperationException | IOException ignored) {
-            // Sistemas não-POSIX (ex.: Windows) ignoram silenciosamente
+            throw new IllegalStateException("Não foi possível serializar usuários", e);
         }
     }
 

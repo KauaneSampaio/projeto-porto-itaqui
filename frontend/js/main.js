@@ -31,7 +31,7 @@ async function rotear() {
         ? '<span><i class="fa-solid fa-house"></i> Visão geral</span>'
         : '<a href="#inicial"><i class="fa-solid fa-house"></i> Visão geral</a>' +
           ' <i class="fa-solid fa-chevron-right sep"></i> <span>' + escapar(tela.titulo) + "</span>";
-    document.title = tela.titulo + " | MeuEbitify";
+    document.title = tela.titulo + " | Ebitify";
 
     document.querySelectorAll("[data-route]").forEach(function (link) {
         const ativo = link.dataset.route === nome;
@@ -125,6 +125,16 @@ $("btnReconectar").addEventListener("click", iniciar);
 
 /* Inicialização */
 aplicarTema(Prefs.get("tema"));
+aplicarModoEscuro(Prefs.get("modoEscuro"));
+
+$("btnModoEscuro").addEventListener("click", function () {
+    const novo = !Prefs.get("modoEscuro");
+    Prefs.set("modoEscuro", novo);
+    aplicarModoEscuro(novo);
+    if (pronto && rotaAtual) {
+        renderizar(rotaAtual);
+    }
+});
 if (Prefs.get("lembrarMenu") && Prefs.get("menuColapsado") && window.innerWidth > 850) {
     sidebar.classList.add("collapsed");
 }

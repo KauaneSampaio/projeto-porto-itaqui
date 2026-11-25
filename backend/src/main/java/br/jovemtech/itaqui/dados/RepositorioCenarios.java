@@ -1,11 +1,10 @@
 package br.jovemtech.itaqui.dados;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,36 +18,40 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Repository;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.jovemtech.itaqui.config.PropriedadesApp;
 import br.jovemtech.itaqui.dominio.Cenario;
 import br.jovemtech.itaqui.dominio.Periodo;
 
 /**
- * Cenários em memória, gravados em {@code <app.dados.diretorio>/cenarios.json} a cada
- * alteração. O cenário "original" é fixo, somente leitura e nunca é gravado.
+ * Cenários em memória, gravados via {@link ArmazenamentoEstado} (disco local ou PostgreSQL)
+ * a cada alteração. Se ainda não houver cenários gravados, carrega a semente de demonstração
+ * ({@code resources/dados/cenarios-semente.json}) quando disponível.
  */
 @Repository
 public class RepositorioCenarios {
 
+    private static final String CHAVE = "cenarios.json";
     private static final Logger LOG = LoggerFactory.getLogger(RepositorioCenarios.class);
+    private static final TypeReference<List<CenarioArquivo>> TIPO_LISTA = new TypeReference<>() {
+    };
 
     /** Formato do arquivo: chaves simples para não depender de serialização de Periodo. */
     record CenarioArquivo(String id, String nome, Instant criadoEm, Instant atualizadoEm,
             Map<String, Map<String, BigDecimal>> ajustes) {
     }
 
-    private final Path arquivo;
+    private final ArmazenamentoEstado armazenamento;
     private final ObjectMapper json;
     private final Cenario original = Cenario.original();
     private final Map<String, Cenario> cenarios = new ConcurrentHashMap<>();
 
-    public RepositorioCenarios(PropriedadesApp props, ObjectMapper json) {
-        this.arquivo = props.dados().diretorio().resolve("cenarios.json");
+    public RepositorioCenarios(ArmazenamentoEstado armazenamento, ObjectMapper json) {
+        this.armazenamento = armazenamento;
         this.json = json;
         carregar();
     }
@@ -87,12 +90,29 @@ public class RepositorioCenarios {
     // ------------------------------------------------------------------
 
     private void carregar() {
-        if (!Files.exists(arquivo)) {
+        Optional<String> salvo = armazenamento.ler(CHAVE);
+        if (salvo.isPresent() && !salvo.get().isBlank()) {
+            carregarDeJson(salvo.get(), armazenamento.descricaoDestino(CHAVE));
             return;
         }
+        // Primeira inicialização sem cenários salvos: carrega a semente de demonstração
+        ClassPathResource semente = new ClassPathResource("dados/cenarios-semente.json");
+        if (semente.exists()) {
+            try (InputStream in = semente.getInputStream()) {
+                String conteudo = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                carregarDeJson(conteudo, "semente de demonstração");
+                if (!cenarios.isEmpty()) {
+                    gravar();
+                }
+            } catch (IOException e) {
+                LOG.warn("Falha ao ler cenarios-semente.json: {}", e.getMessage());
+            }
+        }
+    }
+
+    private void carregarDeJson(String conteudo, String origem) {
         try {
-            List<CenarioArquivo> lidos = json.readValue(arquivo.toFile(), new TypeReference<List<CenarioArquivo>>() {
-            });
+            List<CenarioArquivo> lidos = json.readValue(conteudo, TIPO_LISTA);
             for (CenarioArquivo c : lidos) {
                 Map<String, SortedMap<Periodo, BigDecimal>> ajustes = new LinkedHashMap<>();
                 c.ajustes().forEach((premissa, valores) -> {
@@ -102,10 +122,9 @@ public class RepositorioCenarios {
                 });
                 cenarios.put(c.id(), new Cenario(c.id(), c.nome(), false, c.criadoEm(), c.atualizadoEm(), ajustes));
             }
-            LOG.info("{} cenário(s) carregado(s) de {}", cenarios.size(), arquivo.toAbsolutePath());
+            LOG.info("{} cenário(s) carregado(s) de {}", cenarios.size(), origem);
         } catch (IOException | RuntimeException e) {
-            LOG.warn("Não foi possível ler {} ({}); começando sem cenários salvos", arquivo.toAbsolutePath(),
-                    e.getMessage());
+            LOG.warn("Não foi possível ler {} ({}); começando sem cenários salvos", origem, e.getMessage());
         }
     }
 
@@ -124,12 +143,10 @@ public class RepositorioCenarios {
             saida.add(new CenarioArquivo(c.id(), c.nome(), c.criadoEm(), c.atualizadoEm(), ajustes));
         }
         try {
-            Files.createDirectories(arquivo.getParent());
-            Path temp = arquivo.resolveSibling("cenarios.json.tmp");
-            json.writerWithDefaultPrettyPrinter().writeValue(temp.toFile(), saida);
-            Files.move(temp, arquivo, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            String conteudo = json.writerWithDefaultPrettyPrinter().writeValueAsString(saida);
+            armazenamento.gravar(CHAVE, conteudo, false);
         } catch (IOException e) {
-            throw new UncheckedIOException("Falha ao gravar " + arquivo.toAbsolutePath(), e);
+            throw new UncheckedIOException("Falha ao serializar cenários", e);
         }
     }
 }

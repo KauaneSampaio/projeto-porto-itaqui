@@ -1,12 +1,10 @@
 package br.jovemtech.itaqui.dados;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -16,41 +14,44 @@ import org.springframework.stereotype.Repository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.jovemtech.itaqui.config.PropriedadesApp;
 import br.jovemtech.itaqui.dominio.RegistroLog;
 
 /**
- * Armazena logs de auditoria em memória e persiste em JSON de forma atômica.
+ * Armazena logs de auditoria em memória e persiste via {@link ArmazenamentoEstado}
+ * (disco local ou PostgreSQL).
  */
 @Repository
 public class RepositorioLogs {
 
+    private static final String CHAVE = "logs-auditoria.json";
     private static final Logger log = LoggerFactory.getLogger(RepositorioLogs.class);
     private static final TypeReference<List<RegistroLog>> TIPO_LISTA = new TypeReference<>() {
     };
 
-    private final Path caminhoArquivo;
+    private final ArmazenamentoEstado armazenamento;
     private final ObjectMapper mapper;
     private final List<RegistroLog> registros = new ArrayList<>();
 
-    public RepositorioLogs(PropriedadesApp props, ObjectMapper mapper) {
-        this.caminhoArquivo = props.dados().diretorio().resolve("logs-auditoria.json");
+    public RepositorioLogs(ArmazenamentoEstado armazenamento, ObjectMapper mapper) {
+        this.armazenamento = armazenamento;
         this.mapper = mapper;
-        carregarDoDisco();
+        carregar();
     }
 
-    private synchronized void carregarDoDisco() {
-        if (!Files.exists(caminhoArquivo)) {
+    private synchronized void carregar() {
+        Optional<String> salvo = armazenamento.ler(CHAVE);
+        if (salvo.isEmpty() || salvo.get().isBlank()) {
             return;
         }
         try {
-            List<RegistroLog> salvos = mapper.readValue(caminhoArquivo.toFile(), TIPO_LISTA);
+            List<RegistroLog> lidos = mapper.readValue(salvo.get(), TIPO_LISTA);
             registros.clear();
-            if (salvos != null) {
-                registros.addAll(salvos);
+            if (lidos != null) {
+                registros.addAll(lidos);
             }
+            log.info("{} registro(s) de auditoria carregado(s) de {}", registros.size(), armazenamento.descricaoDestino(CHAVE));
         } catch (IOException e) {
-            log.warn("Falha ao ler {}: {}", caminhoArquivo, e.getMessage());
+            log.warn("Falha ao ler {}: {}", armazenamento.descricaoDestino(CHAVE), e.getMessage());
         }
     }
 
@@ -61,21 +62,19 @@ public class RepositorioLogs {
         if (registros.size() > 500) {
             registros.remove(registros.size() - 1);
         }
-        gravarEmDisco();
+        gravar();
     }
 
     public synchronized List<RegistroLog> listar() {
         return Collections.unmodifiableList(new ArrayList<>(registros));
     }
 
-    private void gravarEmDisco() {
+    private void gravar() {
         try {
-            Files.createDirectories(caminhoArquivo.getParent());
-            Path tmp = caminhoArquivo.resolveSibling(caminhoArquivo.getFileName() + ".tmp");
-            mapper.writerWithDefaultPrettyPrinter().writeValue(tmp.toFile(), registros);
-            Files.move(tmp, caminhoArquivo, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } catch (IOException e) {
-            log.error("Falha ao gravar logs em {}: {}", caminhoArquivo, e.getMessage());
+            String conteudo = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(registros);
+            armazenamento.gravar(CHAVE, conteudo, false);
+        } catch (IOException | RuntimeException e) {
+            log.error("Falha ao gravar logs em {}: {}", armazenamento.descricaoDestino(CHAVE), e.getMessage());
         }
     }
 }

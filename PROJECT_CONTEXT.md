@@ -1,4 +1,4 @@
-# PROJECT_CONTEXT.md — MeuEbitify
+# PROJECT_CONTEXT.md — Ebitify
 
 > Documento de continuidade técnica atualizado em 24/11/2026.  
 > **Não inclui credenciais, senhas ou segredos.**
@@ -9,7 +9,7 @@
 
 | Campo | Valor |
 |---|---|
-| **Nome do Produto** | **MeuEbitify** — Plataforma de Projeção Orçamentária e EBITDA |
+| **Nome do Produto** | **Ebitify** — Plataforma de Projeção Orçamentária e EBITDA |
 | **Repositório** | `projeto-porto-itaqui` — branch ativa: `Branch-Plataforma-Antony` |
 | **Contexto** | Desafio Jovem Tech 2026 — Porto do Itaqui / EMAP |
 | **Objetivo** | Plataforma web segura para visualizar a DRE (Orçado × Realizado × Forecast), calcular EBITDA e Margem, simular cenários por índices econômicos, lançar fechamentos mensais e auditar ações por usuário |

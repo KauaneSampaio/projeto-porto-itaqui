@@ -566,6 +566,11 @@ Telas.configuracoes = (function () {
         mostrarAviso("Aparência aplicada.");
     });
 
+    $("cfgModoEscuro").addEventListener("change", function () {
+        Prefs.set("modoEscuro", this.checked);
+        aplicarModoEscuro(this.checked);
+    });
+
     $("cfgLembrar").addEventListener("change", function () {
         Prefs.set("lembrarMenu", this.checked);
         Prefs.set("menuColapsado", sidebar.classList.contains("collapsed"));
@@ -598,6 +603,7 @@ Telas.configuracoes = (function () {
         render: async function () {
             $("cfgTema").value = Prefs.get("tema");
             $("themePreview").setAttribute("data-theme", Prefs.get("tema"));
+            $("cfgModoEscuro").checked = !!Prefs.get("modoEscuro");
             $("cfgLembrar").checked = !!Prefs.get("lembrarMenu");
             desenharSobre();
             selecionarAba(abaAtual);

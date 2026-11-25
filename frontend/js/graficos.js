@@ -100,6 +100,9 @@ const Graficos = (function () {
         Chart.defaults.font.family = "'Public Sans', 'Segoe UI', Arial, sans-serif";
         const azul = cor("--azul", "#1d6fe0");
         const laranja = cor("--cor-forecast", "#e08a1d");
+        const fundoPonto = cor("--branco", "#ffffff");
+        const corTextoEixo = cor("--texto-2", "#5d6c80");
+        const corGrade = cor("--grade-grafico", "#edf1f6");
         const realizado = dados.realizado.map(function (v, i) { return dados.status[i] === "FECHADO" ? v : null; });
 
         const config = {
@@ -115,7 +118,7 @@ const Graficos = (function () {
                         borderWidth: 2.5,
                         tension: 0.25,
                         pointRadius: 4,
-                        pointBackgroundColor: dados.status.map(function (s) { return s === "ABERTO" ? "#fff" : laranja; }),
+                        pointBackgroundColor: dados.status.map(function (s) { return s === "ABERTO" ? fundoPonto : laranja; }),
                         segment: {
                             borderDash: function (ctx) {
                                 return dados.status[ctx.p1DataIndex] === "ABERTO" ? [6, 5] : undefined;
@@ -158,14 +161,14 @@ const Graficos = (function () {
                     x: {
                         grid: { display: false },
                         border: { display: false },
-                        ticks: { color: "#5d6c80", font: { size: 12, weight: 600 } }
+                        ticks: { color: corTextoEixo, font: { size: 12, weight: 600 } }
                     },
                     y: {
                         beginAtZero: !dados.semZero,
                         grace: "8%",
                         border: { display: false },
-                        grid: { color: "#edf1f6" },
-                        ticks: { color: "#5d6c80", font: { size: 12 }, maxTicksLimit: 6, callback: eixoY }
+                        grid: { color: corGrade },
+                        ticks: { color: corTextoEixo, font: { size: 12 }, maxTicksLimit: 6, callback: eixoY }
                     }
                 }
             }

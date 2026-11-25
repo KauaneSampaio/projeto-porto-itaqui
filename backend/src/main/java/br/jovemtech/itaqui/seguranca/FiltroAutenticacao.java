@@ -131,8 +131,8 @@ public class FiltroAutenticacao extends OncePerRequestFilter {
             return;
         }
 
-        // Rotas administrativas da API (somente ADMIN)
-        if (path.startsWith("/api/evidencias/")) {
+        // Rotas administrativas da API (somente ADMIN; contas.csv também é usado pelo botão Exportar CSV da DRE)
+        if (path.startsWith("/api/evidencias/") && !"/api/evidencias/contas.csv".equals(path)) {
             String perfil = (String) sessao.getAttribute(ATTR_PERFIL);
             if (!"ADMIN".equals(perfil)) {
                 responderErroJson(response, HttpServletResponse.SC_FORBIDDEN,

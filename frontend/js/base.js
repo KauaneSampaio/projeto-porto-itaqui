@@ -145,7 +145,7 @@ function animarNumero(elemento, final, formatador) {
 const CHAVE_PREFS = "itaqui_ebitda_prefs";
 
 const Prefs = (function () {
-    let valores = { tema: "azul", lembrarMenu: false, menuColapsado: false, cenario: "original", ano: null };
+    let valores = { tema: "azul", modoEscuro: false, lembrarMenu: false, menuColapsado: false, cenario: "original", ano: null };
     try {
         const bruto = localStorage.getItem(CHAVE_PREFS);
         if (bruto) {
@@ -172,6 +172,22 @@ const Prefs = (function () {
 
 function aplicarTema(tema) {
     document.documentElement.setAttribute("data-theme", tema);
+}
+
+function aplicarModoEscuro(escuro) {
+    const ativo = !!escuro;
+    document.documentElement.setAttribute("data-mode", ativo ? "dark" : "light");
+    const btn = $("btnModoEscuro");
+    const icone = $("iconeModoEscuro");
+    if (btn && icone) {
+        btn.setAttribute("aria-pressed", String(ativo));
+        btn.title = ativo ? "Ativar modo claro" : "Ativar modo escuro";
+        icone.className = "fa-solid " + (ativo ? "fa-sun" : "fa-moon");
+    }
+    const sw = $("cfgModoEscuro");
+    if (sw) {
+        sw.checked = ativo;
+    }
 }
 
 /* ---------- Avisos, confirmação, carregamento ---------- */

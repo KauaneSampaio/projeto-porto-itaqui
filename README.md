@@ -1,4 +1,4 @@
-# MeuEbitify — Plataforma de Projeção Orçamentária e EBITDA
+# Ebitify — Plataforma de Projeção Orçamentária e EBITDA
 
 Plataforma web de projeção orçamentária, DRE e análise de EBITDA desenvolvida para o desafio **Jovem Tech 2026 — Porto do Itaqui / EMAP**.  
 **Todos os dados da base padrão são fictícios para demonstração.**

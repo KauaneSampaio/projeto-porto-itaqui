@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MeuEbitify — Projeção Orçamentária e EBITDA</title>
+    <title>Ebitify — Projeção Orçamentária e EBITDA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,8 +11,8 @@
         integrity="sha384-PPIZEGYM1v8zp5Py7UjFb79S58UeqCL9pYVnVPURKEqvioPROaVAJKKLzvH2rDnI" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
         integrity="sha384-JUh163oCRItcbPme8pYnROHQMC6fNKTBWtRG3I3I0erJkzNgL7uxKlNwcrcFKeqF" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="css/style.css?v=11">
-    <link rel="stylesheet" href="css/app.css?v=11">
+    <link rel="stylesheet" href="css/style.css?v=14">
+    <link rel="stylesheet" href="css/app.css?v=14">
 </head>
 <body>
     <!-- =============== BARRA SUPERIOR =============== -->
@@ -25,7 +25,7 @@
             <a href="#inicial" class="brand">
                 <span class="icon-empap"><img src="img/IconEmap.png" alt="Logo EMAP"></span>
                 <span class="brand-text">
-                    <strong>MeuEbitify</strong>
+                    <strong>Ebitify</strong>
                     <small>Projeção Orçamentária · EBITDA</small>
                 </span>
             </a>
@@ -34,6 +34,9 @@
             <span class="chip status-api" id="statusApi" hidden title="Conexão com o servidor">
                 <i class="fa-solid fa-circle"></i> <span id="statusApiTexto">Conectando…</span>
             </span>
+            <button type="button" class="btn-modo" id="btnModoEscuro" title="Ativar modo escuro" aria-label="Alternar modo escuro" aria-pressed="false">
+                <i class="fa-solid fa-moon" id="iconeModoEscuro"></i>
+            </button>
             <span class="chip chip-usuario" id="chipUsuario" hidden title="Usuário autenticado">
                 <i class="fa-solid fa-user-shield"></i> <span id="chipUsuarioTexto"></span>
             </span>
@@ -64,7 +67,7 @@
                 </a>
             </nav>
             <div class="sidebar-footer">
-                <strong>MeuEbitify</strong>
+                <strong>Ebitify</strong>
                 Porto do Itaqui / EMAP
                 <small class="aviso-base" id="seloFicticio" hidden>Base demonstrativa · dados fictícios</small>
             </div>
@@ -612,6 +615,16 @@
                                 </div>
                             </form>
                             <label class="setting-row compact">
+                                <span class="setting-text">
+                                    <strong>Modo escuro</strong>
+                                    <small>Reduz o brilho da interface (também disponível no ícone de lua no topo)</small>
+                                </span>
+                                <span class="switch">
+                                    <input type="checkbox" class="sw-input" id="cfgModoEscuro">
+                                    <span class="slider" aria-hidden="true"></span>
+                                </span>
+                            </label>
+                            <label class="setting-row compact">
                                 <span class="setting-text"><strong>Lembrar menu recolhido</strong></span>
                                 <span class="switch">
                                     <input type="checkbox" class="sw-input" id="cfgLembrar">
@@ -637,7 +650,7 @@
                                 </div>
                             </div>
                             <div class="print-only print-head">
-                                <h2>Matriz de evidências — MeuEbitify</h2>
+                                <h2>Matriz de evidências — Ebitify</h2>
                                 <p id="evPrintInfo"></p>
                             </div>
                             <div class="table-wrap">
@@ -849,16 +862,16 @@
     <div class="carregando" id="carregando" hidden><span class="spinner"></span> Calculando…</div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="js/base.js?v=9"></script>
-    <script src="js/api.js?v=10"></script>
-    <script src="js/estado.js?v=9"></script>
-    <script src="js/graficos.js?v=9"></script>
-    <script src="js/telas/inicial.js?v=9"></script>
-    <script src="js/telas/dre.js?v=9"></script>
-    <script src="js/telas/comparativo.js?v=9"></script>
-    <script src="js/telas/cenarios.js?v=9"></script>
-    <script src="js/telas/evidencias.js?v=9"></script>
-    <script src="js/telas/configuracoes.js?v=9"></script>
-    <script src="js/main.js?v=9"></script>
+    <script src="js/base.js?v=13"></script>
+    <script src="js/api.js?v=13"></script>
+    <script src="js/estado.js?v=13"></script>
+    <script src="js/graficos.js?v=13"></script>
+    <script src="js/telas/inicial.js?v=13"></script>
+    <script src="js/telas/dre.js?v=13"></script>
+    <script src="js/telas/comparativo.js?v=13"></script>
+    <script src="js/telas/cenarios.js?v=13"></script>
+    <script src="js/telas/evidencias.js?v=13"></script>
+    <script src="js/telas/configuracoes.js?v=13"></script>
+    <script src="js/main.js?v=14"></script>
 </body>
 </html>

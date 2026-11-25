@@ -8,10 +8,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app")
 public record PropriedadesApp(Dados dados, Cors cors, Auth auth) {
 
-    public record Dados(Path diretorio) {
+    public record Dados(Path diretorio, String databaseUrl) {
         public Dados {
             if (diretorio == null) {
                 diretorio = Path.of("./dados-runtime");
+            }
+            if (databaseUrl != null && databaseUrl.isBlank()) {
+                databaseUrl = null;
             }
         }
     }
@@ -38,7 +41,7 @@ public record PropriedadesApp(Dados dados, Cors cors, Auth auth) {
 
     public PropriedadesApp {
         if (dados == null) {
-            dados = new Dados(null);
+            dados = new Dados(null, null);
         }
         if (cors == null) {
             cors = new Cors(null);

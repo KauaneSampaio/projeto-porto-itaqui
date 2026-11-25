@@ -14,21 +14,21 @@ RUN ./mvnw -B package -DskipTests
 
 # Etapa 2: Imagem final enxuta e segura (JRE 21 + usuário sem privilégios)
 FROM eclipse-temurin:21-jre-alpine
-WORKDIR /opt/meuebitify
+WORKDIR /opt/ebitify
 
-RUN addgroup -S meuebitify && adduser -S meuebitify -G meuebitify \
-    && mkdir -p /opt/meuebitify/dados-runtime \
-    && chown -R meuebitify:meuebitify /opt/meuebitify
+RUN addgroup -S ebitify && adduser -S ebitify -G ebitify \
+    && mkdir -p /opt/ebitify/dados-runtime \
+    && chown -R ebitify:ebitify /opt/ebitify
 
-COPY --from=build --chown=meuebitify:meuebitify /app/backend/target/itaqui-ebitda-0.1.0.jar ./meuebitify.jar
+COPY --from=build --chown=ebitify:ebitify /app/backend/target/itaqui-ebitda-0.1.0.jar ./ebitify.jar
 
-USER meuebitify
+USER ebitify
 
 ENV APP_COOKIE_SECURE=true \
     APP_FORWARD_HEADERS=framework \
     APP_CORS_ORIGENS="" \
-    APP_DADOS_DIRETORIO=/opt/meuebitify/dados-runtime
+    APP_DADOS_DIRETORIO=/opt/ebitify/dados-runtime
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Xms128m", "-Xmx320m", "-XX:+UseSerialGC", "-jar", "/opt/meuebitify/meuebitify.jar"]
+ENTRYPOINT ["java", "-Xms128m", "-Xmx320m", "-XX:+UseSerialGC", "-jar", "/opt/ebitify/ebitify.jar"]

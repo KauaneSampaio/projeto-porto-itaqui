@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: meuebitify
+    name: ebitify
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
@@ -15,4 +15,6 @@ services:
       - key: APP_AUTH_SENHA_ADMIN
         sync: false
       - key: APP_AUTH_SENHA_GESTOR
+        sync: false
+      - key: DATABASE_URL
         sync: false

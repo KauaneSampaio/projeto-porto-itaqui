@@ -83,8 +83,10 @@ Telas.dre = (function () {
         const natureza = naturezas(d.linhas);
         const corte = rotuloPeriodo(d.dataCorte);
 
+        const anoCorte = Number(String(d.dataCorte).slice(0, 4));
+        const trechoCorte = d.ano > anoCorte ? "" : ' · <i class="fa-solid fa-lock"></i> Fechado até ' + escapar(corte);
         $("dreLegenda").innerHTML = "Valores em <strong>" + escapar(d.unidade) + "</strong> · " +
-            escapar(PERSPECTIVAS[perspectiva]) + ' <i class="fa-solid fa-lock"></i> Fechado até ' + escapar(corte) +
+            escapar(PERSPECTIVAS[perspectiva]) + trechoCorte +
             " · Cenário: <strong>" + escapar(d.cenarioNome) + "</strong>";
 
         let cab = '<thead><tr><th class="col-conta">Conta</th>';

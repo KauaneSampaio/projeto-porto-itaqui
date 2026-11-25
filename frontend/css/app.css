@@ -185,6 +185,8 @@
 /* ---------- Tabela da DRE ---------- */
 
 .dre-wrap {
+    width: 100%;
+    max-width: 100%;
     max-height: calc(100vh - 290px);
     overflow: auto;
     border: 1px solid var(--borda);
@@ -192,7 +194,8 @@
 }
 
 .dre-tabela {
-    min-width: 1400px;
+    width: 100%;
+    min-width: 1120px;
     border-collapse: separate;
     border-spacing: 0;
 }
@@ -313,6 +316,16 @@
 }
 
 /* ---------- Comparativo ---------- */
+
+#cmpItem {
+    max-width: min(100%, 400px);
+    min-width: 0;
+    text-overflow: ellipsis;
+}
+
+#cmpCenarioIndicadores.mini-grid {
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+}
 
 tr.linha-opex td:first-child {
     box-shadow: inset 3px 0 0 #e0a21d;
@@ -1038,17 +1051,51 @@ tr.linha-opex td:first-child {
     letter-spacing: 0.01em;
 }
 
-/* ---------- Responsivo (Mobile, Tablet e Projetores Grandes) ---------- */
+/* ---------- Responsivo (Mobile, Notebook, Tablet e Projetores Grandes) ---------- */
 
 [hidden] {
     display: none !important;
 }
 
+/* Impede qualquer view ou card (especialmente DRE e Comparativo no Firefox/Zen) de expandir além da janela */
+.layout {
+    max-width: 100%;
+}
+
+.main {
+    flex: 1 1 0%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.view {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: 100%;
+}
+
+.card,
+.card-header,
+.list-toolbar,
+.header-tools,
+.chart-box {
+    max-width: 100%;
+    min-width: 0;
+}
+
+.tabs {
+    max-width: 100%;
+    flex-wrap: wrap;
+}
+
 .table-wrap,
 .dre-wrap {
-    -webkit-overflow-scrolling: touch;
+    display: block;
+    width: 100%;
     max-width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .two-cols > *,
@@ -1068,9 +1115,17 @@ tr.linha-opex td:first-child {
     grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
 }
 
+@media (max-width: 1500px) {
+    .dre-tabela .col-conta {
+        min-width: 230px;
+        max-width: 230px;
+    }
+}
+
 /* Projetores grandes / Full HD+ / 2K / 4K */
 @media (min-width: 1700px) {
     .main {
+        max-width: none;
         padding: 28px 36px 40px;
     }
 
@@ -1188,6 +1243,11 @@ tr.linha-opex td:first-child {
         grid-template-columns: 1fr;
     }
 
+    #cmpItem {
+        width: 100%;
+        max-width: 100%;
+    }
+
     .cen-oficial {
         flex-direction: column;
     }
@@ -1251,6 +1311,18 @@ tr.linha-opex td:first-child {
         max-width: 155px;
     }
 
+    .tabs {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .tabs .tab {
+        padding: 8px 10px;
+        font-size: 12.5px;
+        text-align: center;
+    }
+
     .header-tools {
         width: 100%;
         display: flex;
@@ -1292,4 +1364,351 @@ tr.linha-destaque td {
 
 .tabela-compacta td:first-child {
     white-space: nowrap;
+}
+
+/* ---------- Botão de Modo Escuro na barra superior ---------- */
+
+.btn-modo {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.btn-modo:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.btn-modo[aria-pressed="true"] {
+    color: #ffd36b;
+    border-color: rgba(255, 211, 107, 0.45);
+}
+
+/* =========================================
+   MODO ESCURO (html[data-mode="dark"])
+   Compatível com os 4 temas (azul, verde, grafite, indigo)
+========================================= */
+
+@media screen {
+    html[data-mode="dark"] {
+        color-scheme: dark;
+        --fundo: #0b1220;
+        --branco: #131d31;
+        --superficie-2: #19263f;
+        --superficie-3: #1f2f4d;
+        --texto: #e6edf7;
+        --texto-2: #94a6c2;
+        --borda: #263654;
+        --grade-grafico: rgba(148, 166, 194, 0.14);
+
+        --cor-orcado: #6d85a6;
+        --cor-forecast: #f59e0b;
+        --fechado-fundo: #152138;
+        --aberto-fundo: #241e14;
+
+        --azul-claro: rgba(59, 130, 246, 0.18);
+        --verde: #34d399;
+        --verde-claro: rgba(16, 185, 129, 0.16);
+        --vermelho: #f87171;
+        --vermelho-claro: rgba(239, 68, 68, 0.16);
+        --ambar: #fbbf24;
+        --ambar-claro: rgba(245, 158, 11, 0.16);
+
+        --sombra: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.28);
+        --sombra-forte: 0 16px 38px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Ajustes de acento por tema no modo escuro para manter contraste alto */
+    html[data-mode="dark"][data-theme="azul"] {
+        --azul: #3b82f6;
+        --azul-hover: #2563eb;
+    }
+
+    html[data-mode="dark"][data-theme="verde"] {
+        --azul: #14b8a6;
+        --azul-hover: #0d9488;
+        --azul-claro: rgba(20, 184, 166, 0.18);
+    }
+
+    html[data-mode="dark"][data-theme="grafite"] {
+        --azul: #6889d5;
+        --azul-hover: #5374c4;
+        --azul-claro: rgba(104, 137, 213, 0.18);
+    }
+
+    html[data-mode="dark"][data-theme="indigo"] {
+        --azul: #818cf8;
+        --azul-hover: #6366f1;
+        --azul-claro: rgba(129, 140, 248, 0.18);
+    }
+
+    /* Cabeçalho e menu lateral na mesma cor do fundo da página no modo escuro */
+    html[data-mode="dark"] .topbar {
+        background: var(--fundo);
+        border-bottom: 1px solid var(--borda);
+    }
+
+    html[data-mode="dark"] .sidebar {
+        background: var(--fundo);
+        border-right: 1px solid var(--borda);
+    }
+
+    html[data-mode="dark"] .sidebar-footer {
+        border-top-color: var(--borda);
+    }
+
+    /* Superfícies que usavam branco literal */
+    html[data-mode="dark"] .card,
+    html[data-mode="dark"] .stat,
+    html[data-mode="dark"] .shortcut,
+    html[data-mode="dark"] .date-chip,
+    html[data-mode="dark"] .row-menu,
+    html[data-mode="dark"] dialog {
+        background: var(--branco);
+        color: var(--texto);
+        border-color: var(--borda);
+    }
+
+    html[data-mode="dark"] dialog {
+        border: 1px solid var(--borda);
+    }
+
+    html[data-mode="dark"] dialog::backdrop {
+        background: rgba(3, 7, 18, 0.72);
+    }
+
+    /* Botões secundários, campos de entrada e seletores */
+    html[data-mode="dark"] .btn-light,
+    html[data-mode="dark"] .icon-btn,
+    html[data-mode="dark"] .pager button {
+        background: var(--superficie-2);
+        color: var(--texto);
+        border-color: var(--borda);
+    }
+
+    html[data-mode="dark"] .btn-light:hover:not(:disabled),
+    html[data-mode="dark"] .icon-btn:hover:not(:disabled) {
+        background: var(--superficie-3);
+        border-color: var(--azul);
+    }
+
+    html[data-mode="dark"] .field input,
+    html[data-mode="dark"] .field select,
+    html[data-mode="dark"] .field textarea,
+    html[data-mode="dark"] .select,
+    html[data-mode="dark"] .input,
+    html[data-mode="dark"] .field-inline input,
+    html[data-mode="dark"] .mes-premissa input {
+        background: var(--superficie-2);
+        color: var(--texto);
+        border-color: var(--borda);
+    }
+
+    html[data-mode="dark"] .mes-premissa input:disabled {
+        background: transparent;
+        border-color: transparent;
+        color: var(--texto-2);
+    }
+
+    /* Textos que usavam var(--topo) azul escuro e ficariam escuros demais */
+    html[data-mode="dark"] .page-title,
+    html[data-mode="dark"] .card-header h2,
+    html[data-mode="dark"] .stat-value,
+    html[data-mode="dark"] .shortcut-text strong,
+    html[data-mode="dark"] .dialog-head h3,
+    html[data-mode="dark"] .info-list dd,
+    html[data-mode="dark"] .dre-tabela tr.nivel-0 td.col-conta,
+    html[data-mode="dark"] .dre-tabela tr.indicador td,
+    html[data-mode="dark"] .notice {
+        color: var(--texto);
+    }
+
+    /* Abas e navegação de configurações */
+    html[data-mode="dark"] .tabs {
+        background: var(--superficie-2);
+    }
+
+    html[data-mode="dark"] .tab {
+        color: var(--texto-2);
+    }
+
+    html[data-mode="dark"] .tab:hover:not([aria-selected="true"]) {
+        color: var(--texto);
+    }
+
+    html[data-mode="dark"] .stab:hover:not([aria-selected="true"]) {
+        background: var(--superficie-2);
+        color: var(--texto);
+    }
+
+    html[data-mode="dark"] .stab[aria-selected="true"] {
+        background: var(--azul-claro);
+        color: #7cb3ff;
+    }
+
+    /* Tabelas gerais e DRE */
+    html[data-mode="dark"] th {
+        background: var(--superficie-2);
+        color: var(--texto-2);
+        border-bottom-color: var(--borda);
+    }
+
+    html[data-mode="dark"] td {
+        border-bottom-color: var(--borda);
+    }
+
+    html[data-mode="dark"] tbody tr:hover {
+        background: rgba(148, 166, 194, 0.06);
+    }
+
+    html[data-mode="dark"] .dre-tabela .col-conta {
+        background: var(--branco);
+        border-right-color: var(--borda);
+    }
+
+    html[data-mode="dark"] .dre-tabela thead .col-conta {
+        background: var(--superficie-2);
+    }
+
+    html[data-mode="dark"] .dre-tabela thead th.mes-fechado {
+        background: #1b2a46;
+        color: var(--texto);
+    }
+
+    html[data-mode="dark"] .dre-tabela thead th.mes-aberto {
+        background: #332714;
+        color: #fcd34d;
+    }
+
+    html[data-mode="dark"] .dre-tabela tr.indicador td,
+    html[data-mode="dark"] .dre-tabela tr.indicador td.col-conta {
+        background: #1b2e4f;
+    }
+
+    html[data-mode="dark"] .dre-tabela tr.indicador-ebitda td,
+    html[data-mode="dark"] .dre-tabela tr.indicador-ebitda td.col-conta {
+        background: var(--azul);
+        color: white;
+    }
+
+    html[data-mode="dark"] .vazio-cel {
+        color: #4f6280;
+    }
+
+    /* Badges e chips */
+    html[data-mode="dark"] .badge-neutro,
+    html[data-mode="dark"] .badge-original,
+    html[data-mode="dark"] .chip-claro {
+        background: var(--superficie-2);
+        color: var(--texto-2);
+    }
+
+    html[data-mode="dark"] .badge-opex,
+    html[data-mode="dark"] .badge-simulado {
+        background: rgba(245, 158, 11, 0.18);
+        color: #fcd34d;
+    }
+
+    html[data-mode="dark"] .badge-manual {
+        background: var(--azul-claro);
+        color: #93c5fd;
+    }
+
+    /* Tela de Premissas e Cenários */
+    html[data-mode="dark"] .passos-cenario li {
+        background: var(--branco);
+        border-color: var(--borda);
+    }
+
+    html[data-mode="dark"] .passos-cenario .passo-num {
+        background: var(--superficie-2);
+        color: var(--texto-2);
+    }
+
+    html[data-mode="dark"] .passos-cenario li.atual {
+        background: var(--azul-claro);
+        border-color: var(--azul);
+    }
+
+    html[data-mode="dark"] .passos-cenario li.feito {
+        background: var(--verde-claro);
+        border-color: rgba(52, 211, 153, 0.4);
+    }
+
+    html[data-mode="dark"] .lista-cenarios button {
+        background: var(--superficie-2);
+        color: var(--texto);
+        border-color: var(--borda);
+    }
+
+    html[data-mode="dark"] .lista-cenarios button.oficial {
+        background: var(--branco);
+    }
+
+    html[data-mode="dark"] .lista-cenarios button[aria-current="true"] {
+        background: var(--azul-claro);
+        border-color: var(--azul);
+    }
+
+    html[data-mode="dark"] .cen-dica,
+    html[data-mode="dark"] .premissa > summary,
+    html[data-mode="dark"] .premissa-ferramentas {
+        background: var(--superficie-2);
+    }
+
+    html[data-mode="dark"] .cen-oficial {
+        background: rgba(59, 130, 246, 0.10);
+        border-color: rgba(59, 130, 246, 0.30);
+    }
+
+    html[data-mode="dark"] .impacto-cards {
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.28);
+    }
+
+    html[data-mode="dark"] .impacto-card {
+        background: var(--branco);
+        border-color: var(--borda);
+    }
+
+    html[data-mode="dark"] .impacto-card.destaque {
+        background: #1d2436;
+        border-color: var(--cor-forecast);
+    }
+
+    html[data-mode="dark"] .impacto-card.favoravel {
+        background: var(--verde-claro);
+        border-color: rgba(52, 211, 153, 0.4);
+    }
+
+    html[data-mode="dark"] .impacto-card.desfavoravel {
+        background: var(--vermelho-claro);
+        border-color: rgba(248, 113, 113, 0.4);
+    }
+
+    html[data-mode="dark"] .impacto-rodape {
+        border-top-color: rgba(245, 158, 11, 0.25);
+    }
+
+    html[data-mode="dark"] .mes-premissa.pendente {
+        background: rgba(59, 130, 246, 0.12);
+        border-color: var(--azul);
+    }
+
+    html[data-mode="dark"] .relatorio.ok {
+        border-color: rgba(52, 211, 153, 0.4);
+    }
+
+    html[data-mode="dark"] .relatorio.falha,
+    html[data-mode="dark"] .erro-conexao {
+        color: #fca5a5;
+        border-color: rgba(248, 113, 113, 0.4);
+    }
 }
