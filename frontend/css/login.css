@@ -153,11 +153,32 @@ label { display: block; font-weight: 600; margin-bottom: 6px; font-size: .86rem;
   margin-top: 18px; text-align: center; font-size: .72rem; line-height: 1.5; color: rgba(255, 255, 255, .72);
 }
 
+@media (min-width: 1680px) {
+  .pagina {
+    padding: 64px clamp(60px, 10vw, 200px);
+    gap: 64px;
+  }
+  .apresentacao h1 { font-size: clamp(2.4rem, 3.2vw, 3.4rem); }
+  .apresentacao p { font-size: 1.15rem; max-width: 38ch; }
+  .cartao { width: min(100%, 430px); padding: 36px 34px 28px; }
+  .cartao h2 { font-size: 1.55rem; }
+  .campo input { height: 48px; font-size: .96rem; }
+  .entrar { height: 50px; font-size: 1rem; }
+}
+
 @media (max-width: 900px) {
-  .pagina { grid-template-columns: 1fr; gap: 32px; padding: 32px 20px; }
+  .pagina { grid-template-columns: 1fr; gap: 28px; padding: 32px 20px; align-content: center; }
   .apresentacao p { max-width: none; }
-  .marca { margin-bottom: 24px; }
+  .marca { margin-bottom: 20px; }
   .cartao { justify-self: center; margin-right: 0; }
+}
+
+@media (max-width: 480px) {
+  .pagina { padding: 24px 14px; gap: 20px; }
+  .marca img { width: 42px; height: 42px; }
+  .marca strong { font-size: 1.35rem; }
+  .cartao { padding: 24px 18px 20px; border-radius: 16px; }
+  .linha { flex-wrap: wrap; gap: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

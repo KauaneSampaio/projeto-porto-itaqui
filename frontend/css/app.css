@@ -501,7 +501,7 @@ tr.linha-opex td:first-child {
     font-size: 17px;
 }
 
-.cen-oficial strong {
+.cen-oficial > div > strong {
     display: block;
     margin-bottom: 4px;
     font-size: 15px;
@@ -1038,9 +1038,97 @@ tr.linha-opex td:first-child {
     letter-spacing: 0.01em;
 }
 
-/* ---------- Responsivo ---------- */
+/* ---------- Responsivo (Mobile, Tablet e Projetores Grandes) ---------- */
+
+[hidden] {
+    display: none !important;
+}
+
+.table-wrap,
+.dre-wrap {
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.two-cols > *,
+.cenarios-grid > *,
+.cenarios-main > *,
+.settings-grid > *,
+.settings-main > *,
+.card {
+    min-width: 0;
+}
+
+.form-actions {
+    flex-wrap: wrap;
+}
+
+#view-inicial .two-cols {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+}
+
+/* Projetores grandes / Full HD+ / 2K / 4K */
+@media (min-width: 1700px) {
+    .main {
+        padding: 28px 36px 40px;
+    }
+
+    .view {
+        max-width: 1920px;
+        margin: 0 auto;
+    }
+
+    .page-title {
+        font-size: clamp(24px, 1.65vw, 32px);
+    }
+
+    .stat-value {
+        font-size: clamp(24px, 1.65vw, 32px);
+    }
+
+    .stat-label {
+        font-size: 14px;
+    }
+
+    .chart-box {
+        height: 400px;
+    }
+
+    .dre-wrap {
+        max-height: 72vh;
+    }
+
+    .dre-tabela th,
+    .dre-tabela td {
+        font-size: 13.5px;
+        padding: 10px 12px;
+    }
+
+    .impacto-card strong {
+        font-size: 24px;
+    }
+
+    .cenarios-grid {
+        grid-template-columns: 330px minmax(0, 1fr);
+    }
+}
+
+@media (min-width: 2200px) {
+    .chart-box {
+        height: 460px;
+    }
+
+    body {
+        font-size: 16px;
+    }
+}
 
 @media (max-width: 1200px) {
+    #view-inicial .two-cols {
+        grid-template-columns: 1fr;
+    }
+
     .cenarios-grid {
         grid-template-columns: 1fr;
     }
@@ -1070,11 +1158,30 @@ tr.linha-opex td:first-child {
 
     .ctx-campo {
         flex: 1;
+        min-width: 130px;
     }
 
     .ctx-campo .select {
         min-width: 0;
         width: 100%;
+    }
+
+    .date-chip {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .settings-tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 6px;
+        padding: 10px;
+    }
+
+    .settings-tabs .stab {
+        flex: 0 0 auto;
+        white-space: nowrap;
     }
 
     .vin-form {
@@ -1083,6 +1190,15 @@ tr.linha-opex td:first-child {
 
     .cen-oficial {
         flex-direction: column;
+    }
+
+    .cen-oficial-acoes {
+        width: 100%;
+    }
+
+    .cen-oficial-acoes .btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .dre-tabela .col-conta {
@@ -1097,8 +1213,54 @@ tr.linha-opex td:first-child {
 }
 
 @media (max-width: 600px) {
+    .status-api #statusApiTexto,
+    .btn-sair span {
+        display: none;
+    }
+
+    .btn-sair {
+        padding: 6px 10px;
+    }
+
     .grade-meses {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .premissa-ferramentas .separador {
+        display: none;
+    }
+
+    .barra-pendentes {
+        bottom: 8px;
+        padding: 12px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .barra-pendentes .grow {
+        display: none;
+    }
+
+    .barra-pendentes .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .dre-tabela .col-conta {
+        min-width: 145px;
+        max-width: 155px;
+    }
+
+    .header-tools {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
@@ -1122,11 +1284,6 @@ tr.linha-destaque td {
     font-weight: 700;
 }
 
-.contexto[hidden],
-.selo-ficticio[hidden] {
-    display: none;
-}
-
 .tabela-compacta th,
 .tabela-compacta td {
     padding: 9px 8px;
@@ -1135,8 +1292,4 @@ tr.linha-destaque td {
 
 .tabela-compacta td:first-child {
     white-space: nowrap;
-}
-
-#view-inicial .two-cols {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
 }
